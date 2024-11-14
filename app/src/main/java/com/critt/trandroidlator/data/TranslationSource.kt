@@ -7,7 +7,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-class SocketsProvider {
+class TranslationSource {
     private var socketSubject: Socket? = null
     private var socketObject: Socket? = null
 
