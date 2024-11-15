@@ -59,8 +59,8 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
     implementation("com.google.dagger:hilt-android:2.51.1")
 
-
-
+    //lifecycle (currently using this for Flow.asLiveData())
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.4")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("androidx.core:core-ktx:1.13.1")
