@@ -16,9 +16,12 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DataModule {
     @Provides
+    fun provideBaseUrl() = BuildConfig.API_BASE_URL
+
+    @Provides
     @Singleton
     fun provideRetrofit(baseUrl: String): Retrofit = Retrofit.Builder()
-        .baseUrl(BuildConfig.API_BASE_URL)
+        .baseUrl(baseUrl)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
