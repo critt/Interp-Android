@@ -22,7 +22,9 @@ class MainViewModel @Inject constructor(private val repository: TranslationRepos
             repository.connectObject(languageObject, languageSubject).collect {
                 objectTranslation.postValue(it.text)
             }
+        }
 
+        viewModelScope.launch(context = Dispatchers.IO) {
             repository.connectSubject(languageSubject, languageObject).collect {
                 subjectTranslation.postValue(it.text)
             }
