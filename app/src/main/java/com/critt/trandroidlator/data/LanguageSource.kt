@@ -18,12 +18,6 @@ sealed class ApiResult <out T> {
     object Loading: ApiResult<Nothing>()
 }
 
-enum class ApiStatus {
-    SUCCESS,
-    ERROR,
-    LOADING
-}
-
 fun <T> toResultFlow(call: suspend () -> Response<T>?): Flow<ApiResult<T>?> {
     return flow {
         emit(ApiResult.Loading)
