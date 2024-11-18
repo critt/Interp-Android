@@ -22,5 +22,5 @@ class TranslationRepository @Inject constructor(
     /** returns Flow<ApiResult<List<LanguageData>>?>
      *  this represents all of the languages we support for voice transcription and translation
      */
-    suspend fun getSupportedLanguages(): Flow<ApiResult<List<LanguageData>>?> = toResultFlow { languageSource.getSupportedLanguages() }
+    fun getSupportedLanguages(): Flow<ApiResult<List<LanguageData>>?> = toResultFlow { languageSource.getSupportedLanguages() }
 }

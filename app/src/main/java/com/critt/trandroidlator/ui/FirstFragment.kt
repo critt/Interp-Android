@@ -1,18 +1,24 @@
 package com.critt.trandroidlator.ui
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.navigation.fragment.findNavController
-import com.critt.trandroidlator.R
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import com.critt.trandroidlator.data.ApiResult
 import com.critt.trandroidlator.databinding.FragmentFirstBinding
+import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
  */
+@AndroidEntryPoint
 class FirstFragment : Fragment() {
+
+    private val viewModel: MainViewModel by viewModels()
 
     private var _binding: FragmentFirstBinding? = null
 
@@ -33,8 +39,29 @@ class FirstFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        viewModel.getSupportedLanguages().observe(viewLifecycleOwner) { result ->
+            //binding.textviewFirst.text = it
+            //binding.progressBar.isVisible = result is ApiResult.Loading
+            when(result) {
+                is ApiResult.Error -> {
+                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
+                    Timber.d(result.message)
+                }
+                is ApiResult.Success -> {
+                    val languages = result.data
+                    languages?.let {
+                        val languageNames = languages.map { it.language }
+                        Timber.d(languageNames.joinToString(", "))
+                    }
+                }
+                else -> Unit
+            }
+        }
+
         binding.buttonFirst.setOnClickListener {
-            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+            //findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+            Timber.d("Button clicked")
+            viewModel.connect("en", "de")
         }
     }
 

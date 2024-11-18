@@ -1,6 +1,7 @@
 package com.critt.trandroidlator.data
 
 import com.critt.trandroidlator.BuildConfig
+import com.google.gson.Gson
 import io.socket.client.IO
 import io.socket.client.Socket
 import kotlinx.coroutines.channels.awaitClose
@@ -11,8 +12,8 @@ class TranslationSource {
     private var socketSubject: Socket? = null
     private var socketObject: Socket? = null
 
-     fun connectObject(languageObject: String, languageSubject: String): Flow<SpeechData> {
-         socketObject = IO.socket(BuildConfig.API_BASE_URL + "object")
+    fun connectObject(languageObject: String, languageSubject: String): Flow<SpeechData> {
+        socketObject = IO.socket(BuildConfig.API_BASE_URL + "object")
         return initSocket(socketObject, getTranscriptionConfig(languageObject, languageSubject))
     }
 
@@ -23,7 +24,7 @@ class TranslationSource {
 
     private fun initSocket(socket: Socket?, config: Map<String, Any>): Flow<SpeechData> = callbackFlow {
         socket?.connect()
-        socket?.emit("startGoogleCloudStream", config)
+        socket?.emit("startGoogleCloudStream", Gson().toJson(config))
 
         socket?.on("speechData") { args ->
             val data = args[0] as SpeechData

@@ -49,6 +49,9 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
+    //timber
+    implementation("com.jakewharton.timber:timber:5.0.1")
+
     //retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -59,8 +62,8 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
     implementation("com.google.dagger:hilt-android:2.51.1")
 
-
-
+    //lifecycle (currently using this for Flow.asLiveData())
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.4")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("androidx.core:core-ktx:1.13.1")
