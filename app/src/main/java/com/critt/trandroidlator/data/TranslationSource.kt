@@ -39,6 +39,16 @@ class TranslationSource {
         }
     }
 
+    fun disconnect() {
+        socketObject?.emit("endGoogleCloudStream")
+        socketObject?.off("speechData")
+        socketObject?.disconnect()
+
+        socketSubject?.emit("endGoogleCloudStream")
+        socketSubject?.off("speechData")
+        socketSubject?.disconnect()
+    }
+
     private fun getTranscriptionConfig(languageObject: String, languageSubject: String) =
         mapOf(
             "audio" to mapOf(
