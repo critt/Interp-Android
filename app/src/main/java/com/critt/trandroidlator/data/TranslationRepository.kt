@@ -19,6 +19,10 @@ class TranslationRepository @Inject constructor(
     fun connectSubject(languageObject: String, languageSubject: String) =
         translationSource.connectSubject(languageObject, languageSubject)
 
+    fun disconnect() {
+        translationSource.disconnect()
+    }
+
     /** returns Flow<ApiResult<List<LanguageData>>?>
      *  this represents all of the languages we support for voice transcription and translation
      */

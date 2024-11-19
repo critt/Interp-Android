@@ -10,5 +10,5 @@ data class SpeechData(
 @Serializable
 data class LanguageData(
     val language: String,
-    val code: String
+    val name: String
 )

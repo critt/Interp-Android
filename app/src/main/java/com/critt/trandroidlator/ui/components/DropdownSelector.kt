@@ -5,17 +5,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.critt.trandroidlator.data.LanguageData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownSelector(
-    options: List<String>,
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit
+    options: List<LanguageData>,
+    selectedOption: LanguageData,
+    onOptionSelected: (LanguageData) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedText by remember { mutableStateOf(selectedOption) }
+    var selectedText by remember { mutableStateOf(selectedOption.name) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -39,9 +39,9 @@ fun DropdownSelector(
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option) },
+                    text = { Text(option.name) },
                     onClick = {
-                        selectedText = option
+                        selectedText = option.name
                         expanded = false
                         onOptionSelected(option)
                     }
@@ -49,16 +49,4 @@ fun DropdownSelector(
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun PreviewDropdownSelector() {
-    DropdownSelector(
-        options = listOf("English", "German", "French", "Spanish"),
-        selectedOption = "English",
-        onOptionSelected = { selectedOption ->
-            // Handle the selected option
-        }
-    )
 }

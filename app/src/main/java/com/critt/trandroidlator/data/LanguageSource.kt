@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import retrofit2.Response
 import retrofit2.http.GET
+import timber.log.Timber
 
 interface LanguageSource {
     @GET("getSupportedLanguages")
@@ -27,6 +28,7 @@ fun <T> toResultFlow(call: suspend () -> Response<T>?): Flow<ApiResult<T>?> {
             c?.let {
                 if (c.isSuccessful) {
                     emit(ApiResult.Success(c.body()))
+                    Timber.d("Success: ${c.body()}")
                 } else {
                     c.errorBody()?.let {
                         val error = it.string()
