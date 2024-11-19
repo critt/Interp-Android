@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 Box(modifier = Modifier.weight(.375F)) {
                     when (supportedLanguages) {
-                        is ApiResult.Success -> (supportedLanguages as ApiResult.Success<List<LanguageData>>).data
+                        is ApiResult.Success -> (supportedLanguages as ApiResult.Success<List<LanguageData>>).data //TODO: This Flow<ApiResult<T>>.asLiveData() pattern is super awk
                         else -> emptyList()
                     }?.let {
                         DropdownSelector(
