@@ -13,20 +13,22 @@ private val DarkColorScheme = darkColorScheme(
     background = Color.Black,
     surface = Color.DarkGray,
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White
+    onSecondary = Color.Green,
+    onBackground = Color.DarkGray,
+    onSurface = Color.LightGray,
+    primaryContainer = Color.DarkGray,
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Color.Gray,
-    secondary = Color.DarkGray,
+    secondary = Color.LightGray,
     background = Color.White,
-    surface = Color.DarkGray,
+    surface = Color.LightGray,
     onPrimary = Color.White,
-    onSecondary = Color.White,
+    onSecondary = Color.Green,
     onBackground = Color.DarkGray,
-    onSurface = Color.White
+    onSurface = Color.DarkGray,
+    primaryContainer = Color.LightGray
 )
 
 @Composable
