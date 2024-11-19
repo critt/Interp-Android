@@ -1,6 +1,5 @@
-# trandroidlater //TODO: Change this name wtf
-
-A Native Android client for a sockets/gRPC/GCP translation system. Built using [socket.io](https://socket.io/blog/native-socket-io-and-android/), Jetpack Compose, Kotlin Flows, and Hilt
+# trandroidlator //TODO: Change this name wtf
+A native Android client for a sockets/gRPC/GCP bidirectional translation system. Built using [socket.io](https://socket.io/blog/native-socket-io-and-android/), Jetpack Compose, Kotlin Flows, and Hilt
 
 <img src="screenshots/1.png" alt="Main Screenshot" width="300"/>
 
