@@ -2,6 +2,7 @@ package com.critt.trandroidlator.di
 
 
 import com.critt.trandroidlator.BuildConfig
+import com.critt.trandroidlator.data.AudioSource
 import com.critt.trandroidlator.data.LanguageSource
 import com.critt.trandroidlator.data.TranslationSource
 import dagger.Module
@@ -32,4 +33,8 @@ object DataModule {
     @Provides
     @Singleton
     fun provideSocketsService(): TranslationSource = TranslationSource()
+
+    @Provides
+    @Singleton
+    fun provideAudioSource(): AudioSource = AudioSource()
 }

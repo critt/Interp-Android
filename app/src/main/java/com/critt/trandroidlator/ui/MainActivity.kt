@@ -1,8 +1,13 @@
 package com.critt.trandroidlator.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.media.MediaRecorder
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critt.trandroidlator.data.ApiResult
 import com.critt.trandroidlator.data.LanguageData
@@ -22,10 +28,36 @@ import com.critt.trandroidlator.ui.components.TranslationGroup
 import com.critt.trandroidlator.ui.theme.TrandroidlatorTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
+    private var recorder: MediaRecorder? = null
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            startRecording()
+        } else {
+            // Handle the case where the user denied the permission
+            // You can show a message or disable the functionality that requires the permission
+        }
+    }
+
+    private fun startRecording() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED) {
+            viewModel.startRecording()
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun stopRecording() {
+        viewModel.stopRecording()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,11 +130,18 @@ class MainActivity : ComponentActivity() {
                 FloatingActionButton(
                     onClick = {
                         when (viewModel.isConnected) {
-                            true -> viewModel.disconnect()
-                            false -> viewModel.connect(
-                                viewModel.objectLanguage.language,
-                                viewModel.subjectLanguage.language
-                            )
+                            true -> {
+                                viewModel.stopRecording()
+                                viewModel.disconnect()
+                            }
+                            false -> {
+                                viewModel.connect(
+                                    viewModel.objectLanguage.language,
+                                    viewModel.subjectLanguage.language
+                                )
+
+                                startRecording()
+                            }
                         }
                     },
                     modifier = Modifier.weight(.15F)

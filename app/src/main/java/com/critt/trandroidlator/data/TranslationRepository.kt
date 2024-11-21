@@ -19,6 +19,9 @@ class TranslationRepository @Inject constructor(
     fun connectSubject(languageObject: String, languageSubject: String) =
         translationSource.connectSubject(languageObject, languageSubject)
 
+    fun onData(subjectData: ByteArray?, objectData: ByteArray?) =
+        translationSource.onData(subjectData, objectData)
+
     fun disconnect() {
         translationSource.disconnect()
     }
