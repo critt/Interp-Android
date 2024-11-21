@@ -6,21 +6,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.critt.trandroidlator.data.ApiResult
+import com.critt.trandroidlator.data.AudioSource
 import com.critt.trandroidlator.data.LanguageData
 import com.critt.trandroidlator.data.TranslationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(private val repository: TranslationRepository) :
+class MainViewModel @Inject constructor(private val repository: TranslationRepository, private val audioSource: AudioSource) :
     ViewModel() {
 
     val objectTranslation: MutableLiveData<String> = MutableLiveData<String>()
     val subjectTranslation: MutableLiveData<String> = MutableLiveData<String>()
     val supportedLanguages: LiveData<ApiResult<List<LanguageData>>?>
+
     var isConnected = false //TODO: this makes no sense
+    var recordJob: Job? = null
+    var subjectSpeaking = true
 
     init {
         supportedLanguages = repository.getSupportedLanguages().asLiveData()
@@ -41,6 +46,28 @@ class MainViewModel @Inject constructor(private val repository: TranslationRepos
             repository.connectSubject(languageSubject, languageObject).collect {
                 subjectTranslation.postValue(it.text)
             }
+        }
+    }
+
+    fun startRecording() {
+        if (recordJob == null) {
+            recordJob = viewModelScope.launch(context = Dispatchers.IO) {
+                audioSource.startRecording(::handleInput)
+            }
+        }
+    }
+
+    fun stopRecording() {
+        audioSource.stopRecording()
+        recordJob?.cancel()
+        recordJob = null
+    }
+
+    fun handleInput(data: ByteArray) {
+        if (subjectSpeaking) {
+            repository.onData(data, null)
+        } else {
+            repository.onData(null, data)
         }
     }
 

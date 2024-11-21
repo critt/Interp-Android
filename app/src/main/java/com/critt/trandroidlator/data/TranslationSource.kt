@@ -22,14 +22,20 @@ class TranslationSource {
         return initSocket(socketSubject, getTranscriptionConfig(languageObject, languageSubject))
     }
 
+    fun onData(subjectData: ByteArray?, objectData: ByteArray?) {
+        socketSubject?.emit("binaryAudioData", subjectData)
+        socketObject?.emit("binaryAudioData", objectData)
+    }
+
     private fun initSocket(socket: Socket?, config: Map<String, Any>): Flow<SpeechData> = callbackFlow {
         socket?.connect()
         socket?.emit("startGoogleCloudStream", Gson().toJson(config))
 
         socket?.on("speechData") { args ->
-            val data = args[0] as SpeechData
-            println("Subject speechData: $data")
-            trySend(data)
+            Gson().fromJson(args[0].toString(), SpeechData::class.java).let {
+                println("Object speechData: $it")
+                trySend(it)
+            }
         }
 
         awaitClose {
