@@ -1,5 +1,6 @@
 package com.critt.trandroidlator.ui
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,50 +9,73 @@ import androidx.lifecycle.viewModelScope
 import com.critt.trandroidlator.data.ApiResult
 import com.critt.trandroidlator.data.AudioSource
 import com.critt.trandroidlator.data.LanguageData
+import com.critt.trandroidlator.data.Speaker
 import com.critt.trandroidlator.data.TranslationRepository
+import com.critt.trandroidlator.data.defaultLangObject
+import com.critt.trandroidlator.data.defaultLangSubject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(private val repository: TranslationRepository, private val audioSource: AudioSource) :
     ViewModel() {
 
-    val objectTranslation: MutableLiveData<String> = MutableLiveData<String>()
-    val subjectTranslation: MutableLiveData<String> = MutableLiveData<String>()
-    val supportedLanguages: LiveData<ApiResult<List<LanguageData>>?>
+    val translationObject = MutableLiveData("")
+    private val builderObject = StringBuilder()
+    val translationSubject = MutableLiveData("")
+    private val builderSubject = StringBuilder()
 
-    var isConnected = false //TODO: this makes no sense
-    var recordJob: Job? = null
-    var subjectSpeaking = true
+    var langSubject = MutableLiveData(defaultLangSubject)
+    var langObject = MutableLiveData(defaultLangObject)
+    val supportedLanguages: LiveData<ApiResult<List<LanguageData>>?> by lazy { repository.getSupportedLanguages().asLiveData()}
 
-    init {
-        supportedLanguages = repository.getSupportedLanguages().asLiveData()
-    }
+    var isConnected = MutableLiveData(false) //TODO: this makes no sense
+    private var jobRecord: Job? = null
+    var speakerCurr = Speaker.SUBJECT
 
-    var subjectLanguage = LanguageData("en", "English")
-    var objectLanguage = LanguageData("de", "German")
+    fun connect(): Boolean {
+        if (langSubject.value == null || langObject.value == null) {
+            return false
+        }
 
-    fun connect(languageObject: String, languageSubject: String) {
-        isConnected = true //TODO: this makes no sense
+        isConnected.postValue(true)  //TODO: this makes no sense
+        builderSubject.clear()
+        builderObject.clear()
+
         viewModelScope.launch(context = Dispatchers.IO) {
-            repository.connectObject(languageObject, languageSubject).collect {
-                objectTranslation.postValue(it.text)
+            repository.connectSubject(langSubject.value!!.language, langObject.value!!.language).collect {
+                Timber.d("speakerCurr: $speakerCurr")
+                if (it.isFinal) {
+                    builderSubject.append(it.data)
+                    translationSubject.postValue(builderSubject.toString())
+                } else {
+                    translationSubject.postValue(builderSubject.toString() + it.data)
+                }
             }
         }
 
         viewModelScope.launch(context = Dispatchers.IO) {
-            repository.connectSubject(languageSubject, languageObject).collect {
-                subjectTranslation.postValue(it.text)
+            repository.connectObject(langSubject.value!!.language, langObject.value!!.language).collect {
+                Timber.d("speakerCurr: $speakerCurr")
+                if (it.isFinal) {
+                    builderObject.append(it.data)
+                    translationObject.postValue(builderObject.toString())
+                } else {
+                    translationObject.postValue(builderObject.toString() + it.data)
+                }
             }
         }
+
+        return true
     }
 
     fun startRecording() {
-        if (recordJob == null) {
-            recordJob = viewModelScope.launch(context = Dispatchers.IO) {
+        if (jobRecord == null) {
+            jobRecord = viewModelScope.launch(context = Dispatchers.IO) {
                 audioSource.startRecording(::handleInput)
             }
         }
@@ -59,20 +83,20 @@ class MainViewModel @Inject constructor(private val repository: TranslationRepos
 
     fun stopRecording() {
         audioSource.stopRecording()
-        recordJob?.cancel()
-        recordJob = null
+        jobRecord?.cancel()
+        jobRecord = null
     }
 
     fun handleInput(data: ByteArray) {
-        if (subjectSpeaking) {
-            repository.onData(data, null)
+        if (speakerCurr == Speaker.SUBJECT) {
+            repository.onData(data, ByteArray(2048))
         } else {
-            repository.onData(null, data)
+            repository.onData(ByteArray(2048), data)
         }
     }
 
     fun disconnect() {
-        isConnected = false //TODO: this makes no sense
+        isConnected.postValue(false)//TODO: this makes no sense
         repository.disconnect()
     }
 }

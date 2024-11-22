@@ -12,14 +12,14 @@ class TranslationSource {
     private var socketSubject: Socket? = null
     private var socketObject: Socket? = null
 
-    fun connectObject(languageObject: String, languageSubject: String): Flow<SpeechData> {
+    fun connectObject(languageSubject: String, languageObject: String): Flow<SpeechData> {
         socketObject = IO.socket(BuildConfig.API_BASE_URL + "object")
         return initSocket(socketObject, getTranscriptionConfig(languageObject, languageSubject))
     }
 
-    fun connectSubject(languageObject: String, languageSubject: String): Flow<SpeechData> {
+    fun connectSubject(languageSubject: String, languageObject: String): Flow<SpeechData> {
         socketSubject = IO.socket(BuildConfig.API_BASE_URL + "subject")
-        return initSocket(socketSubject, getTranscriptionConfig(languageObject, languageSubject))
+        return initSocket(socketSubject, getTranscriptionConfig(languageSubject, languageObject))
     }
 
     fun onData(subjectData: ByteArray?, objectData: ByteArray?) {
@@ -55,7 +55,7 @@ class TranslationSource {
         socketSubject?.disconnect()
     }
 
-    private fun getTranscriptionConfig(languageObject: String, languageSubject: String) =
+    private fun getTranscriptionConfig(languageSubject: String, languageObject: String) =
         mapOf(
             "audio" to mapOf(
                 "encoding" to "LINEAR16",

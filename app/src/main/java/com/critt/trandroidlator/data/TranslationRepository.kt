@@ -10,14 +10,14 @@ class TranslationRepository @Inject constructor(
     /** returns Flow<SpeechData>
      * this represents the translation of the subject language to the object language
      */
-    fun connectObject(languageObject: String, languageSubject: String) =
-        translationSource.connectObject(languageObject, languageSubject)
+    fun connectObject(languageSubject: String, languageObject: String) =
+        translationSource.connectObject(languageSubject, languageObject)
 
     /** returns Flow<SpeechData>
      * this represents the translation of the object language to the subject language
      */
-    fun connectSubject(languageObject: String, languageSubject: String) =
-        translationSource.connectSubject(languageObject, languageSubject)
+    fun connectSubject(languageSubject: String, languageObject: String) =
+        translationSource.connectSubject(languageSubject, languageObject)
 
     fun onData(subjectData: ByteArray?, objectData: ByteArray?) =
         translationSource.onData(subjectData, objectData)

@@ -11,18 +11,18 @@ import com.critt.trandroidlator.data.LanguageData
 @Composable
 fun DropdownSelector(
     options: List<LanguageData>,
-    selectedOption: LanguageData,
+    selectedOption: LanguageData?,
     onOptionSelected: (LanguageData) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedText by remember { mutableStateOf(selectedOption.name) }
+    var selectedText by remember { mutableStateOf(selectedOption?.name) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
     ) {
         TextField(
-            value = selectedText,
+            value = selectedText ?: "",
             onValueChange = {},
             readOnly = true,
             trailingIcon = {
