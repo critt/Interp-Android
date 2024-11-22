@@ -29,6 +29,8 @@ class AudioSource constructor(
             recorder?.read(buffer, 0, buffer.size)
             onData(buffer)
         }
+
+        stopRecording()
     }
 
     fun stopRecording() {
