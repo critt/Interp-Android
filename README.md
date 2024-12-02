@@ -1,4 +1,4 @@
-# trandroidlator //TODO: Change this name wtf
+# Interp
 A native Android client for a sockets/gRPC/GCP bidirectional translation system. Built using [socket.io](https://socket.io/blog/native-socket-io-and-android/), Jetpack Compose, [AudioRecord](https://developer.android.com/reference/android/media/AudioRecord), Kotlin Flows, and Hilt. This is a native Android version of [a similar Flutter app I made](https://github.com/critt/translation_circuit), as an exercise more than anything else.
 
 <img src="screenshots/2.jpg" alt="Main Screenshot" width="300"/>
