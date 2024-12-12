@@ -5,7 +5,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 
-class AudioSource constructor(
+class AudioSource(
     private val sampleRate: Int = 16000,
     private val bufferSize: Int = 2048
 ) {
@@ -25,7 +25,7 @@ class AudioSource constructor(
         recorder?.startRecording()
 
         while (recorder != null) {
-            val buffer = ByteArray(2048)
+            val buffer = ByteArray(bufferSize)
             recorder?.read(buffer, 0, buffer.size)
             onData(buffer)
         }
