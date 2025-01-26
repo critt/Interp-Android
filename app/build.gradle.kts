@@ -1,3 +1,10 @@
+import java.io.FileInputStream
+import java.util.Properties
+
+val properties = Properties().apply {
+    load(FileInputStream(rootProject.file("paths.properties")))
+}
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -20,7 +27,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.251:10000/\"")
+        buildConfigField("String", "API_BASE_URL", properties["servicePath"] as String)
     }
 
     buildTypes {
