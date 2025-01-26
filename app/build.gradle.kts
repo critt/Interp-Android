@@ -27,7 +27,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "API_BASE_URL", properties["servicePath"] as String)
+        buildConfigField("String", "API_BASE_URL", "\"${properties["servicePath"] as String}\"")
     }
 
     buildTypes {
