@@ -1,13 +1,22 @@
 package com.critt.trandroidlator.ui
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.viewModels
+import com.critt.trandroidlator.ui.AuthViewModel.AuthState
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
 import com.google.firebase.auth.FirebaseAuth
-import timber.log.Timber
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class AuthActivity : AppCompatActivity() {
     private val signInLauncher = registerForActivityResult(
         FirebaseAuthUIActivityResultContract()
@@ -15,13 +24,42 @@ class AuthActivity : AppCompatActivity() {
         onSignInResult(result)
     }
 
+    private val viewModel: AuthViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createSignInIntent()
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.toastMessage.collect { message ->
+                    message?.let {
+                        Toast.makeText(this@AuthActivity, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.authState.collect { state ->
+                    when (state) {
+                        AuthState.Authenticated ->
+                            startActivity(
+                                Intent(
+                                    this@AuthActivity,
+                                    MainActivity::class.java
+                                )
+                            )
+
+                        AuthState.Unauthenticated -> {}
+                    }
+                }
+            }
+        }
     }
 
     private fun createSignInIntent() {
-        Timber.d("createSignInIntent()")
         // Choose authentication providers
         val providers = arrayListOf(
             AuthUI.IdpConfig.EmailBuilder().setAllowNewAccounts(false).build(),
@@ -30,27 +68,22 @@ class AuthActivity : AppCompatActivity() {
         // Create and launch sign-in intent
         val signInIntent = AuthUI.getInstance()
             .createSignInIntentBuilder()
+            .setIsSmartLockEnabled(false)
             .setAvailableProviders(providers)
             .build()
         signInLauncher.launch(signInIntent)
     }
 
     private fun onSignInResult(result: FirebaseAuthUIAuthenticationResult) {
-        Timber.d("onSignInResult()")
-
-        val response = result.idpResponse
         if (result.resultCode == RESULT_OK) {
             // Successfully signed in
-            val user = FirebaseAuth.getInstance().currentUser
-            // ...
-            //TODO: Store session material and launch MainActivity OR
-            //TODO: Launch MainActivity with session material in the bundle and handle session state there
+            FirebaseAuth.getInstance().currentUser?.let {
+                viewModel.initSession(it)
+            }
         } else {
-            // Sign in failed. If response is null the user canceled the
-            // sign-in flow using the back button. Otherwise check
-            // response.getError().getErrorCode() and handle the error.
-            // ...
-            //TODO: Handle auth failure
+            result.idpResponse?.error?.message?.let {
+                viewModel.showToast(it)
+            }
         }
     }
 }

@@ -59,6 +59,9 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
+    //shared prefs / crypto
+    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
+
     //firebase
     implementation("com.firebaseui:firebase-ui-auth:8.0.0")
     implementation("com.google.firebase:firebase-auth-ktx")
