@@ -30,7 +30,7 @@ class AuthViewModel @Inject constructor(
 
             result.onSuccess { tokenResult ->
                 tokenResult.token?.let {
-                    sessionManager.saveAuthToken(it)
+                    sessionManager.setAuthToken(it)
                     _authState.value = AuthState.Authenticated
                 } ?: run {
                     showToast("Token is null")

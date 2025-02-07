@@ -13,7 +13,7 @@ import javax.inject.Singleton
 class SessionManager @Inject constructor(
     @ApplicationContext context: Context
 ) {
-    var token: String? = null
+    //TODO: Add token to http requests with an interceptor, and to sockets messages somehow (would be cool if it followed a similar pattern)
 
     private val sharedPreferences = EncryptedSharedPreferences.create(
         context,
@@ -23,13 +23,15 @@ class SessionManager @Inject constructor(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
-    fun saveAuthToken(token: String) {
+    fun setAuthToken(token: String) {
         sharedPreferences.edit().putString(PREFS_KEY_FB_TOKEN, token).apply()
-        this.token = token
+    }
+
+    fun getAuthToken(): String? {
+        return sharedPreferences.getString("PREFS_KEY_FB_TOKEN", null)
     }
 
     fun clearAuthToken() {
-        token = null
         sharedPreferences.edit().remove(PREFS_KEY_FB_TOKEN).apply()
     }
 }
