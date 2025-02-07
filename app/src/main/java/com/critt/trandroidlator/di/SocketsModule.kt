@@ -1,5 +1,6 @@
 package com.critt.trandroidlator.di
 
+import com.critt.trandroidlator.data.SessionManager
 import com.critt.trandroidlator.data.TranslationSource
 import dagger.Module
 import dagger.Provides
@@ -12,5 +13,5 @@ import javax.inject.Singleton
 object SocketsModule {
     @Provides
     @Singleton
-    fun provideSocketsService(): TranslationSource = TranslationSource()
+    fun provideSocketsService(sessionManager: SessionManager): TranslationSource = TranslationSource(sessionManager)
 }

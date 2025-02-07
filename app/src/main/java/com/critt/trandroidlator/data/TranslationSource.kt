@@ -8,17 +8,27 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-class TranslationSource {
+class TranslationSource(
+    private val sessionManager: SessionManager
+) {
     private var socketSubject: Socket? = null
     private var socketObject: Socket? = null
 
     fun connectObject(languageSubject: String, languageObject: String): Flow<SpeechData> {
-        socketObject = IO.socket(BuildConfig.API_BASE_URL + "object")
+        /**
+         * https://socketio.github.io/socket.io-client-java/initialization.html#auth
+         * */
+        val options: IO.Options = IO.Options.builder().setAuth(mapOf("token" to sessionManager.getAuthToken())).build()
+        socketObject = IO.socket(BuildConfig.API_BASE_URL + "object", options)
         return initSocket(socketObject, getTranscriptionConfig(languageObject, languageSubject))
     }
 
     fun connectSubject(languageSubject: String, languageObject: String): Flow<SpeechData> {
-        socketSubject = IO.socket(BuildConfig.API_BASE_URL + "subject")
+        /**
+         * https://socketio.github.io/socket.io-client-java/initialization.html#auth
+         * */
+        val options: IO.Options = IO.Options.builder().setAuth(mapOf("token" to sessionManager.getAuthToken())).build()
+        socketSubject = IO.socket(BuildConfig.API_BASE_URL + "subject", options)
         return initSocket(socketSubject, getTranscriptionConfig(languageSubject, languageObject))
     }
 

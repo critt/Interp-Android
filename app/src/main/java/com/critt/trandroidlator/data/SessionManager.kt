@@ -28,7 +28,7 @@ class SessionManager @Inject constructor(
     }
 
     fun getAuthToken(): String? {
-        return sharedPreferences.getString("PREFS_KEY_FB_TOKEN", null)
+        return sharedPreferences.getString(PREFS_KEY_FB_TOKEN, null)
     }
 
     fun clearAuthToken() {
