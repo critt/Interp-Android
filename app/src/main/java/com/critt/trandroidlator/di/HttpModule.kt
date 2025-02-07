@@ -2,9 +2,7 @@ package com.critt.trandroidlator.di
 
 
 import com.critt.trandroidlator.BuildConfig
-import com.critt.trandroidlator.data.AudioSource
 import com.critt.trandroidlator.data.LanguageSource
-import com.critt.trandroidlator.data.TranslationSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,7 +13,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object NetworkModule {
+object HttpModule {
     @Provides
     fun provideBaseUrl() = BuildConfig.API_BASE_URL
 
@@ -29,12 +27,4 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideLanguageSource(retrofit: Retrofit): LanguageSource = retrofit.create(LanguageSource::class.java)
-
-    @Provides
-    @Singleton
-    fun provideSocketsService(): TranslationSource = TranslationSource()
-
-    @Provides
-    @Singleton
-    fun provideAudioSource(): AudioSource = AudioSource()
 }
