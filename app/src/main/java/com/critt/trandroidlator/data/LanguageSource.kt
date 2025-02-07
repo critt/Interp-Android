@@ -38,6 +38,8 @@ fun <T> toResultFlow(call: suspend () -> Response<T>?): Flow<ApiResult<T>?> {
                 }
             }
         } catch (e: Exception) {
+            Timber.e(e.message)
+            e.printStackTrace()
             emit(ApiResult.Error(e.toString()))
         }
 
