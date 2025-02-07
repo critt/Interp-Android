@@ -28,7 +28,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRESTService(retrofit: Retrofit): LanguageSource = retrofit.create(LanguageSource::class.java)
+    fun provideLanguageSource(retrofit: Retrofit): LanguageSource = retrofit.create(LanguageSource::class.java)
 
     @Provides
     @Singleton
