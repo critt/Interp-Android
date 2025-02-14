@@ -10,6 +10,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    id("com.google.gms.google-services")
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0" // this version matches your Kotlin version
     kotlin("plugin.serialization") version "1.9.22"
 }
@@ -57,6 +58,14 @@ dependencies {
     implementation("io.socket:socket.io-client:2.1.1") {
         exclude(group = "org.json", module = "json")
     }
+
+    //shared prefs / crypto
+    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
+
+    //firebase
+    implementation("com.firebaseui:firebase-ui-auth:8.0.0")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
 
     //timber
     implementation("com.jakewharton.timber:timber:5.0.1")

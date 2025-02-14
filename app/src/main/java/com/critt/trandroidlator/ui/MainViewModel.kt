@@ -1,6 +1,5 @@
 package com.critt.trandroidlator.ui
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.critt.trandroidlator.data.ApiResult
 import com.critt.trandroidlator.data.AudioSource
 import com.critt.trandroidlator.data.LanguageData
+import com.critt.trandroidlator.data.SessionManager
 import com.critt.trandroidlator.data.Speaker
 import com.critt.trandroidlator.data.TranslationRepository
 import com.critt.trandroidlator.data.defaultLangObject
@@ -21,7 +21,11 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(private val repository: TranslationRepository, private val audioSource: AudioSource) :
+class MainViewModel @Inject constructor(
+    private val translationRepo: TranslationRepository,
+    private val sessionManager: SessionManager,
+    private val audioSource: AudioSource
+) :
     ViewModel() {
 
     val translationObject = MutableLiveData("")
@@ -31,7 +35,9 @@ class MainViewModel @Inject constructor(private val repository: TranslationRepos
 
     var langSubject = MutableLiveData(defaultLangSubject)
     var langObject = MutableLiveData(defaultLangObject)
-    val supportedLanguages: LiveData<ApiResult<List<LanguageData>>?> by lazy { repository.getSupportedLanguages().asLiveData()}
+    val supportedLanguages: LiveData<ApiResult<List<LanguageData>>?> by lazy {
+        translationRepo.getSupportedLanguages().asLiveData()
+    }
 
     var isConnected = MutableLiveData(false) //TODO: this makes no sense
     private var jobRecord: Job? = null
@@ -47,27 +53,32 @@ class MainViewModel @Inject constructor(private val repository: TranslationRepos
         builderObject.clear()
 
         viewModelScope.launch(context = Dispatchers.IO) {
-            repository.connectSubject(langSubject.value!!.language, langObject.value!!.language).collect {
-                Timber.d("speakerCurr: $speakerCurr")
-                if (it.isFinal) {
-                    builderSubject.append(it.data)
-                    translationSubject.postValue(builderSubject.toString())
-                } else {
-                    translationSubject.postValue(builderSubject.toString() + it.data)
+            translationRepo.connectSubject(
+                langSubject.value!!.language,
+                langObject.value!!.language
+            )
+                .collect {
+                    Timber.d("speakerCurr: $speakerCurr")
+                    if (it.isFinal) {
+                        builderSubject.append(it.data)
+                        translationSubject.postValue(builderSubject.toString())
+                    } else {
+                        translationSubject.postValue(builderSubject.toString() + it.data)
+                    }
                 }
-            }
         }
 
         viewModelScope.launch(context = Dispatchers.IO) {
-            repository.connectObject(langSubject.value!!.language, langObject.value!!.language).collect {
-                Timber.d("speakerCurr: $speakerCurr")
-                if (it.isFinal) {
-                    builderObject.append(it.data)
-                    translationObject.postValue(builderObject.toString())
-                } else {
-                    translationObject.postValue(builderObject.toString() + it.data)
+            translationRepo.connectObject(langSubject.value!!.language, langObject.value!!.language)
+                .collect {
+                    Timber.d("speakerCurr: $speakerCurr")
+                    if (it.isFinal) {
+                        builderObject.append(it.data)
+                        translationObject.postValue(builderObject.toString())
+                    } else {
+                        translationObject.postValue(builderObject.toString() + it.data)
+                    }
                 }
-            }
         }
 
         return true
@@ -89,14 +100,14 @@ class MainViewModel @Inject constructor(private val repository: TranslationRepos
 
     fun handleInput(data: ByteArray) {
         if (speakerCurr == Speaker.SUBJECT) {
-            repository.onData(data, ByteArray(2048))
+            translationRepo.onData(data, ByteArray(2048))
         } else {
-            repository.onData(ByteArray(2048), data)
+            translationRepo.onData(ByteArray(2048), data)
         }
     }
 
     fun disconnect() {
         isConnected.postValue(false)//TODO: this makes no sense
-        repository.disconnect()
+        translationRepo.disconnect()
     }
 }
