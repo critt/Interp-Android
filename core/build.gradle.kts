@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.critt.trandroidlator.core"
+    namespace = "com.critt.core"
     compileSdk = 34
 
     defaultConfig {

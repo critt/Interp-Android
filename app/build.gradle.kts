@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.critt.trandroidlator"
+    namespace = "com.critt.interp"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.critt.trandroidlator"
+        applicationId = "com.critt.interp"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

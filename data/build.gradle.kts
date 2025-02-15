@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-    namespace = "com.critt.trandroidlator.data"
+    namespace = "com.critt.data"
     compileSdk = 34
 
     defaultConfig {

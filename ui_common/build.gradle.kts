@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.critt.trandroidlator.ui_common"
+    namespace = "com.critt.ui_common"
     compileSdk = 34
 
     defaultConfig {

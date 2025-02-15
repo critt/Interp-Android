@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.critt.trandroidlator.domain"
+    namespace = "com.critt.domain"
     compileSdk = 34
 
     defaultConfig {
@@ -32,10 +32,6 @@ android {
 }
 
 dependencies {
-    //keep this version low because this version of android studio is broken in a way that prevents the serialization plugin from working
-    implementation("androidx.core:core-ktx:1.13.1")
-    //unless configured to use the unreleased plugin version (RC2) and this version of kotlinx-serialization-json
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-
     testImplementation("junit:junit:4.13.2")
 }
