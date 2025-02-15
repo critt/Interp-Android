@@ -7,12 +7,12 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.critt.trandroidlator.data.ApiResult
 import com.critt.trandroidlator.data.AudioSource
-import com.critt.trandroidlator.data.LanguageData
+import com.critt.trandroidlator.domain.LanguageData
 import com.critt.trandroidlator.data.SessionManager
-import com.critt.trandroidlator.data.Speaker
+import com.critt.trandroidlator.domain.Speaker
 import com.critt.trandroidlator.data.TranslationRepository
-import com.critt.trandroidlator.data.defaultLangObject
-import com.critt.trandroidlator.data.defaultLangSubject
+import com.critt.trandroidlator.domain.defaultLangObject
+import com.critt.trandroidlator.domain.defaultLangSubject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

@@ -15,3 +15,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "trandroidlator"
 include(":app")
+include(":domain")
+include(":data")
+include(":ui_common")
+include(":core")

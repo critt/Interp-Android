@@ -24,20 +24,15 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critt.trandroidlator.data.ApiResult
-import com.critt.trandroidlator.data.LanguageData
-import com.critt.trandroidlator.data.Speaker
-import com.critt.trandroidlator.data.defaultLangObject
-import com.critt.trandroidlator.data.defaultLangSubject
+import com.critt.trandroidlator.domain.LanguageData
+import com.critt.trandroidlator.domain.Speaker
+import com.critt.trandroidlator.domain.defaultLangObject
+import com.critt.trandroidlator.domain.defaultLangSubject
 import com.critt.trandroidlator.ui.components.DropdownSelector
-import com.critt.trandroidlator.ui.theme.TrandroidlatorTheme
+import com.critt.trandroidlator.ui_common.theme.TrandroidlatorTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import timber.log.Timber
 
 
 @AndroidEntryPoint
@@ -168,7 +163,10 @@ class MainActivity : ComponentActivity() {
                     TranslationGroup(Speaker.OBJECT)
                 }
                 Box(modifier = Modifier.weight(.40F)) {
-                    TranslationGroup(Speaker.SUBJECT, interactionSource)
+                    TranslationGroup(
+                        Speaker.SUBJECT,
+                        interactionSource
+                    )
                 }
                 Row(
                     modifier = Modifier
