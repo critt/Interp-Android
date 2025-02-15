@@ -33,3 +33,12 @@ google-services.json
 # Android Profiling
 *.hprof
 /.DS_Store
+domain/src/.DS_Store
+ui_common/.DS_Store
+ui_common/proguard-rules.pro
+ui_common/src/.DS_Store
+domain/.DS_Store
+data/src/.DS_Store
+data/.DS_Store
+core/src/.DS_Store
+core/.DS_Store

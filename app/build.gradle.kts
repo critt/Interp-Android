@@ -1,10 +1,3 @@
-import java.io.FileInputStream
-import java.util.Properties
-
-val properties = Properties().apply {
-    load(FileInputStream(rootProject.file("paths.properties")))
-}
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -16,19 +9,16 @@ plugins {
 }
 
 android {
-    namespace = "com.critt.trandroidlator"
+    namespace = "com.critt.interp"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.critt.trandroidlator"
+        applicationId = "com.critt.interp"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        buildConfigField("String", "API_BASE_URL", "\"${properties["servicePath"] as String}\"")
     }
 
     buildTypes {
@@ -49,18 +39,16 @@ android {
     }
     buildFeatures {
         viewBinding = true
-        buildConfig = true
         compose = true
     }
 }
 
 dependencies {
-    implementation("io.socket:socket.io-client:2.1.1") {
-        exclude(group = "org.json", module = "json")
-    }
-
-    //shared prefs / crypto
-    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
+    //TODO: Dependency management across modules
+    implementation(project(":data"))
+    implementation(project(":domain"))
+    implementation(project(":core"))
+    implementation(project(":ui_common"))
 
     //firebase
     implementation("com.firebaseui:firebase-ui-auth:8.0.0")
@@ -70,11 +58,6 @@ dependencies {
     //timber
     implementation("com.jakewharton.timber:timber:5.0.1")
 
-    //retrofit
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
-
     //hilt
     kapt("com.google.dagger:hilt-compiler:2.51.1")
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
@@ -82,6 +65,13 @@ dependencies {
 
     //lifecycle (currently using this for Flow.asLiveData())
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
+
+    // Optional - Integration with activities
+    implementation("androidx.activity:activity-compose:1.9.2")
+    // Optional - Integration with ViewModels
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
+    // Optional - Integration with LiveData
+    implementation("androidx.compose.runtime:runtime-livedata")
 
     //material theme
     implementation("com.google.android.material:material:1.12.0")
@@ -97,18 +87,6 @@ dependencies {
     // UI Tests
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-    // Optional - Integration with activities
-    implementation("androidx.activity:activity-compose:1.9.2")
-    // Optional - Integration with ViewModels
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
-    // Optional - Integration with LiveData
-    implementation("androidx.compose.runtime:runtime-livedata")
-
-
-    //keep this version low because this version of android studio is broken in a way that prevents the serialization plugin from working
-    //unless configured to use the unreleased plugin version (RC2) and this version of kotlinx-serialization-json
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-    implementation("androidx.core:core-ktx:1.13.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")

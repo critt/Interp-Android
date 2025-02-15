@@ -13,5 +13,9 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "trandroidlator"
+rootProject.name = "interp"
 include(":app")
+include(":domain")
+include(":data")
+include(":ui_common")
+include(":core")
