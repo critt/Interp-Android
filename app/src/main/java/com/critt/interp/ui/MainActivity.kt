@@ -31,7 +31,7 @@ import com.critt.domain.Speaker
 import com.critt.domain.defaultLangObject
 import com.critt.domain.defaultLangSubject
 import com.critt.interp.ui.components.DropdownSelector
-import com.critt.ui_common.theme.TrandroidlatorTheme
+import com.critt.ui_common.theme.InterpTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            TrandroidlatorTheme {
+            InterpTheme {
                 MainView(viewModel)
             }
         }
@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun TranslationGroup(speaker: Speaker, interactionSource: MutableInteractionSource? = null) {
-        TrandroidlatorTheme {
+        InterpTheme {
             Column(modifier = Modifier.padding(16.dp)) {
                 LanguageDisplay(speaker)
                 Spacer(modifier = Modifier.height(12.dp))
@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
         val langSubject by viewModel.langSubject.observeAsState(defaultLangSubject)
         val langObject by viewModel.langObject.observeAsState(defaultLangObject)
 
-        TrandroidlatorTheme {
+        InterpTheme {
             Row {
                 Text(
                     when (speaker) {
@@ -116,7 +116,7 @@ class MainActivity : ComponentActivity() {
             Speaker.OBJECT -> viewModel.translationSubject.observeAsState("")
         }
 
-        TrandroidlatorTheme {
+        InterpTheme {
             Surface(
                 modifier = Modifier
                     .clickable(
@@ -149,7 +149,7 @@ class MainActivity : ComponentActivity() {
 
         viewModel.speakerCurr = if (isPressed) Speaker.SUBJECT else Speaker.OBJECT
 
-        TrandroidlatorTheme {
+        InterpTheme {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
