@@ -1,9 +1,7 @@
 package com.critt.interp.ui
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.critt.data.ApiResult
 import com.critt.data.AudioSource
@@ -16,6 +14,8 @@ import com.critt.domain.defaultLangSubject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -35,13 +35,21 @@ class MainViewModel @Inject constructor(
 
     var langSubject = MutableLiveData(defaultLangSubject)
     var langObject = MutableLiveData(defaultLangObject)
-    val supportedLanguages: LiveData<ApiResult<List<LanguageData>>?> by lazy {
-        translationRepo.getSupportedLanguages().asLiveData()
-    }
+
+    private val _supportedLanguages = MutableStateFlow<ApiResult<List<LanguageData>>>(ApiResult.Loading)
+    val supportedLanguages = _supportedLanguages.asStateFlow()
 
     var isConnected = MutableLiveData(false) //TODO: this makes no sense
     private var jobRecord: Job? = null
     var speakerCurr = Speaker.SUBJECT
+
+    init {
+        viewModelScope.launch(context = Dispatchers.IO) {
+            translationRepo.getSupportedLanguages().collect {
+                _supportedLanguages.value = it
+            }
+        }
+    }
 
     fun connect(): Boolean {
         if (langSubject.value == null || langObject.value == null) {

@@ -20,22 +20,20 @@ sealed class ApiResult <out T> {
     object Loading: ApiResult<Nothing>()
 }
 
-fun <T> toResultFlow(call: suspend () -> Response<T>?): Flow<ApiResult<T>?> {
+fun <T> toResultFlow(call: suspend () -> Response<T>): Flow<ApiResult<T>> {
     return flow {
         emit(ApiResult.Loading)
 
         try {
             val c = call()
-            c?.let {
-                if (c.isSuccessful) {
-                    emit(ApiResult.Success(c.body()))
-                    Timber.d("Success: ${c.body()}")
-                } else {
-                    c.errorBody()?.let {
-                        val error = it.string()
-                        it.close()
-                        emit(ApiResult.Error(error))
-                    }
+            if (c.isSuccessful) {
+                emit(ApiResult.Success(c.body()))
+                Timber.d("Success: ${c.body()}")
+            } else {
+                c.errorBody()?.let {
+                    val error = it.string()
+                    it.close()
+                    emit(ApiResult.Error(error))
                 }
             }
         } catch (e: Exception) {

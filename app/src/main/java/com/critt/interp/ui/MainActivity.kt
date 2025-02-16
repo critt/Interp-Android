@@ -139,7 +139,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     @Preview
     fun MainView(viewModel: MainViewModel = viewModel()) {
-        val supportedLanguages by viewModel.supportedLanguages.observeAsState(ApiResult.Loading)
+        val supportedLanguages = viewModel.supportedLanguages.collectAsState().value
         val langSubject by viewModel.langSubject.observeAsState(defaultLangSubject)
         val langObject by viewModel.langObject.observeAsState(defaultLangObject)
         val isConnected by viewModel.isConnected.observeAsState(false)
@@ -177,7 +177,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Box(modifier = Modifier.weight(.375F)) {
                         when (supportedLanguages) {
-                            is ApiResult.Success -> (supportedLanguages as ApiResult.Success<List<LanguageData>>).data //TODO: This Flow<ApiResult<T>>.asLiveData() pattern is super awk
+                            is ApiResult.Success -> supportedLanguages.data
                             else -> emptyList()
                         }?.let {
                             DropdownSelector(
@@ -194,7 +194,7 @@ class MainActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(modifier = Modifier.weight(.375F)) {
                         when (supportedLanguages) {
-                            is ApiResult.Success -> (supportedLanguages as ApiResult.Success<List<LanguageData>>).data
+                            is ApiResult.Success -> supportedLanguages.data
                             else -> emptyList()
                         }?.let {
                             DropdownSelector(
