@@ -1,15 +1,15 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    kotlin("plugin.serialization") version "1.9.22"
+    kotlin("plugin.serialization") version Dependencies.PluginVersions.SERIALIZATION
 }
 
 android {
     namespace = "com.critt.domain"
-    compileSdk = 34
+    compileSdk = BuildConfiguration.COMPILE_SDK
 
     defaultConfig {
-        minSdk = 26
+        minSdk = BuildConfiguration.MIN_SDK
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -23,15 +23,19 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = BuildConfiguration.SOURCE_COMPATIBILITY
+        targetCompatibility = BuildConfiguration.TARGET_COMPATIBILITY
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = BuildConfiguration.JVM_TARGET
     }
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-    testImplementation("junit:junit:4.13.2")
+    //serialization
+    implementation(Dependencies.Serialization.SERIALIZATION)
+
+    //testing
+    testImplementation(Dependencies.Testing.JUNIT)
+    testImplementation(Dependencies.Testing.JUNIT_JUPITER)
 }

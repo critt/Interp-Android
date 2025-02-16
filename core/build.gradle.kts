@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "com.critt.core"
-    compileSdk = 34
+    compileSdk = BuildConfiguration.COMPILE_SDK
 
     defaultConfig {
-        minSdk = 26
+        minSdk = BuildConfiguration.MIN_SDK
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -22,14 +22,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = BuildConfiguration.SOURCE_COMPATIBILITY
+        targetCompatibility = BuildConfiguration.TARGET_COMPATIBILITY
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = BuildConfiguration.JVM_TARGET
     }
 }
 
 dependencies {
-    testImplementation("junit:junit:4.13.2")
+    //testing
+    testImplementation(Dependencies.Testing.JUNIT)
+    testImplementation(Dependencies.Testing.JUNIT_JUPITER)
 }

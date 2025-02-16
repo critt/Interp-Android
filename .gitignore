@@ -42,3 +42,7 @@ data/src/.DS_Store
 data/.DS_Store
 core/src/.DS_Store
 core/.DS_Store
+buildSrc/src/main/kotlin/.DS_Store
+buildSrc/src/.DS_Store
+buildSrc/src/main/.DS_Store
+buildSrc/.DS_Store
