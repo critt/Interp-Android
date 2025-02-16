@@ -1,15 +1,15 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0" // this version matches your Kotlin version
+    id("org.jetbrains.kotlin.plugin.compose") version Dependencies.PluginVersions.KOTLIN
 }
 
 android {
     namespace = "com.critt.ui_common"
-    compileSdk = 34
+    compileSdk = BuildConfiguration.COMPILE_SDK
 
     defaultConfig {
-        minSdk = 26
+        minSdk = BuildConfiguration.MIN_SDK
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -23,11 +23,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = BuildConfiguration.SOURCE_COMPATIBILITY
+        targetCompatibility = BuildConfiguration.TARGET_COMPATIBILITY
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = BuildConfiguration.JVM_TARGET
     }
     buildFeatures {
         viewBinding = true
@@ -36,17 +36,19 @@ android {
 }
 
 dependencies {
-    implementation("com.google.android.material:material:1.12.0")
-    testImplementation("junit:junit:4.13.2")
-
     //material theme
-    implementation("com.google.android.material:material:1.12.0")
+    implementation(Dependencies.Material.MATERIAL)
 
     //compose
-    val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
-    implementation(composeBom)
-    implementation("androidx.compose.material3:material3")
+    implementation(platform(Dependencies.Compose.BOM))
+    androidTestImplementation(platform(Dependencies.Compose.BOM))
+    implementation(Dependencies.Compose.MATERIAL3)
+
     // Android Studio Preview support
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation(Dependencies.Compose.UI_TOOLING_PREVIEW)
+    debugImplementation(Dependencies.Compose.UI_TOOLING)
+
+    //testing
+    testImplementation(Dependencies.Testing.JUNIT)
+    testImplementation(Dependencies.Testing.JUNIT_JUPITER)
 }

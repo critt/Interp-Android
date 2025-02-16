@@ -13,10 +13,10 @@ plugins {
 
 android {
     namespace = "com.critt.data"
-    compileSdk = 34
+    compileSdk = BuildConfiguration.COMPILE_SDK
 
     defaultConfig {
-        minSdk = 26
+        minSdk = BuildConfiguration.MIN_SDK
         consumerProguardFiles("consumer-rules.pro")
         buildConfigField("String", "API_BASE_URL", "\"${properties["servicePath"] as String}\"")
     }
@@ -31,11 +31,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = BuildConfiguration.SOURCE_COMPATIBILITY
+        targetCompatibility = BuildConfiguration.TARGET_COMPATIBILITY
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = BuildConfiguration.JVM_TARGET
     }
     buildFeatures {
         buildConfig = true
@@ -46,26 +46,27 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":core"))
 
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-
-    implementation("io.socket:socket.io-client:2.1.1") {
+    implementation(Dependencies.SocketIO.SOCKET_IO) {
         exclude(group = "org.json", module = "json")
     }
 
     //shared prefs / crypto
-    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
+    implementation(Dependencies.Crypto.CRYPTO_KTX)
 
     //timber
-    implementation("com.jakewharton.timber:timber:5.0.1")
+    implementation(Dependencies.Timber.TIMBER)
 
     //retrofit
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
+    implementation(Dependencies.Retrofit.RETROFIT)
+    implementation(Dependencies.Retrofit.CONVERTER_GSON)
+    implementation(Dependencies.Retrofit.COROUTINES_ADAPTER)
 
     //hilt
-    kapt("com.google.dagger:hilt-compiler:2.51.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
-    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt(Dependencies.Hilt.COMPILER)
+    kapt(Dependencies.Hilt.ANDROID_COMPILER)
+    implementation(Dependencies.Hilt.ANDROID)
+
+    //testing
+    testImplementation(Dependencies.Testing.JUNIT)
+    testImplementation(Dependencies.Testing.JUNIT_JUPITER)
 }
