@@ -1,5 +1,8 @@
 package com.critt.interp.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -28,16 +32,25 @@ class MainViewModel @Inject constructor(
 ) :
     ViewModel() {
 
-    val translationObject = MutableLiveData("")
     private val builderObject = StringBuilder()
-    val translationSubject = MutableLiveData("")
     private val builderSubject = StringBuilder()
 
-    var langSubject = MutableLiveData(defaultLangSubject)
-    var langObject = MutableLiveData(defaultLangObject)
+    // StateFlow for translations
+    private val _translationSubject = MutableStateFlow("")
+    val translationSubject = _translationSubject.asStateFlow()
+    private val _translationObject = MutableStateFlow("")
+    val translationObject = _translationObject.asStateFlow()
 
-    private val _supportedLanguages = MutableStateFlow<ApiResult<List<LanguageData>>>(ApiResult.Loading)
+    // StateFlow for supported languages
+    private val _supportedLanguages =
+        MutableStateFlow<ApiResult<List<LanguageData>>>(ApiResult.Loading)
     val supportedLanguages = _supportedLanguages.asStateFlow()
+
+    // Compose State for selected languages
+    var langSubject by mutableStateOf(defaultLangSubject)
+        private set
+    var langObject by mutableStateOf(defaultLangObject)
+        private set
 
     var isConnected = MutableLiveData(false) //TODO: this makes no sense
     private var jobRecord: Job? = null
@@ -45,46 +58,50 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(context = Dispatchers.IO) {
-            translationRepo.getSupportedLanguages().collect {
-                _supportedLanguages.value = it
+            translationRepo.getSupportedLanguages().collect { res ->
+                _supportedLanguages.update { res }
             }
         }
     }
 
-    fun connect(): Boolean {
-        if (langSubject.value == null || langObject.value == null) {
-            return false
-        }
+    fun updateLangSubject(lang: LanguageData) {
+        langSubject = lang
+    }
 
+    fun updateLangObject(lang: LanguageData) {
+        langObject = lang
+    }
+
+    fun connect(): Boolean {
         isConnected.postValue(true)  //TODO: this makes no sense
         builderSubject.clear()
         builderObject.clear()
 
         viewModelScope.launch(context = Dispatchers.IO) {
             translationRepo.connectSubject(
-                langSubject.value!!.language,
-                langObject.value!!.language
+                langSubject.language,
+                langObject.language
             )
-                .collect {
+                .collect { res ->
                     Timber.d("speakerCurr: $speakerCurr")
-                    if (it.isFinal) {
-                        builderSubject.append(it.data)
-                        translationSubject.postValue(builderSubject.toString())
+                    if (res.isFinal) {
+                        builderSubject.append(res.data)
+                        _translationSubject.update { builderSubject.toString() }
                     } else {
-                        translationSubject.postValue(builderSubject.toString() + it.data)
+                       _translationSubject.update { builderSubject.toString() + res.data }
                     }
                 }
         }
 
         viewModelScope.launch(context = Dispatchers.IO) {
-            translationRepo.connectObject(langSubject.value!!.language, langObject.value!!.language)
-                .collect {
+            translationRepo.connectObject(langSubject.language, langObject.language)
+                .collect { res ->
                     Timber.d("speakerCurr: $speakerCurr")
-                    if (it.isFinal) {
-                        builderObject.append(it.data)
-                        translationObject.postValue(builderObject.toString())
+                    if (res.isFinal) {
+                        builderObject.append(res.data)
+                        _translationObject.update { builderObject.toString() }
                     } else {
-                        translationObject.postValue(builderObject.toString() + it.data)
+                        _translationObject.update { builderObject.toString() + res.data }
                     }
                 }
         }

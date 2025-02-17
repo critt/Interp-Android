@@ -1,5 +1,6 @@
 package com.critt.data
 
+import com.critt.data.BuildConfig
 import com.critt.domain.SpeechData
 import com.google.gson.Gson
 import io.socket.client.IO
@@ -7,6 +8,7 @@ import io.socket.client.Socket
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import timber.log.Timber
 
 class TranslationSource(
     private val sessionManager: SessionManager
@@ -37,7 +39,9 @@ class TranslationSource(
         socketObject?.emit("binaryAudioData", objectData)
     }
 
-    private fun initSocket(socket: Socket?, config: Map<String, Any>): Flow<SpeechData> = callbackFlow {
+    private fun initSocket(socket: Socket?, config: Map<String, Any>): Flow<SpeechData> = callbackFlow { // Cold Flow
+        Timber.d("initSocket() ::  config = $config")
+
         socket?.connect()
         socket?.emit("startGoogleCloudStream", Gson().toJson(config))
 

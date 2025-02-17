@@ -26,10 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critt.data.ApiResult
-import com.critt.domain.LanguageData
 import com.critt.domain.Speaker
-import com.critt.domain.defaultLangObject
-import com.critt.domain.defaultLangSubject
 import com.critt.interp.ui.components.DropdownSelector
 import com.critt.ui_common.theme.InterpTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -83,8 +80,9 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun LanguageDisplay(speaker: Speaker) {
-        val langSubject by viewModel.langSubject.observeAsState(defaultLangSubject)
-        val langObject by viewModel.langObject.observeAsState(defaultLangObject)
+        //TODO: State Hoisting
+        val langSubject = viewModel.langSubject
+        val langObject = viewModel.langObject
 
         InterpTheme {
             Row {
@@ -111,9 +109,10 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun OutputCard(user: Speaker, interactionSource: MutableInteractionSource? = null) {
+        //TODO: State Hoisting
         val output by when (user) {
-            Speaker.SUBJECT -> viewModel.translationObject.observeAsState("")
-            Speaker.OBJECT -> viewModel.translationSubject.observeAsState("")
+            Speaker.SUBJECT -> viewModel.translationObject.collectAsState()
+            Speaker.OBJECT -> viewModel.translationSubject.collectAsState()
         }
 
         InterpTheme {
@@ -139,11 +138,14 @@ class MainActivity : ComponentActivity() {
     @Composable
     @Preview
     fun MainView(viewModel: MainViewModel = viewModel()) {
-        val supportedLanguages = viewModel.supportedLanguages.collectAsState().value
-        val langSubject by viewModel.langSubject.observeAsState(defaultLangSubject)
-        val langObject by viewModel.langObject.observeAsState(defaultLangObject)
-        val isConnected by viewModel.isConnected.observeAsState(false)
+        // StateFlow
+        val supportedLanguages by viewModel.supportedLanguages.collectAsState()
+        // Compose State
+        val langSubject = viewModel.langSubject
+        val langObject = viewModel.langObject
 
+        //TODO: LiveData tech debt
+        val isConnected by viewModel.isConnected.observeAsState(false)
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -177,10 +179,10 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Box(modifier = Modifier.weight(.375F)) {
                         DropdownSelector(
-                            options = if (supportedLanguages is ApiResult.Success) supportedLanguages.data else emptyList(),
+                            options = (supportedLanguages as? ApiResult.Success)?.data ?: emptyList(),
                             selectedOption = langSubject,
                             onOptionSelected = { selectedOption ->
-                                viewModel.langSubject.value = selectedOption
+                                viewModel.updateLangSubject(selectedOption)
                             }
                         )
                     }
@@ -189,10 +191,10 @@ class MainActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(modifier = Modifier.weight(.375F)) {
                         DropdownSelector(
-                            options = if (supportedLanguages is ApiResult.Success) supportedLanguages.data else emptyList(),
+                            options = (supportedLanguages as? ApiResult.Success)?.data ?: emptyList(),
                             selectedOption = langObject,
                             onOptionSelected = { selectedOption ->
-                                viewModel.langObject.value = selectedOption
+                                viewModel.updateLangObject(selectedOption)
                             }
                         )
                     }
