@@ -176,35 +176,25 @@ class MainActivity : ComponentActivity() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(modifier = Modifier.weight(.375F)) {
-                        when (supportedLanguages) {
-                            is ApiResult.Success -> supportedLanguages.data
-                            else -> emptyList()
-                        }?.let {
-                            DropdownSelector(
-                                options = it,
-                                selectedOption = langSubject,
-                                onOptionSelected = { selectedOption ->
-                                    viewModel.langSubject.value = selectedOption
-                                }
-                            )
-                        }
+                        DropdownSelector(
+                            options = if (supportedLanguages is ApiResult.Success) supportedLanguages.data else emptyList(),
+                            selectedOption = langSubject,
+                            onOptionSelected = { selectedOption ->
+                                viewModel.langSubject.value = selectedOption
+                            }
+                        )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("⇌", color = MaterialTheme.colorScheme.onBackground)
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(modifier = Modifier.weight(.375F)) {
-                        when (supportedLanguages) {
-                            is ApiResult.Success -> supportedLanguages.data
-                            else -> emptyList()
-                        }?.let {
-                            DropdownSelector(
-                                options = it,
-                                selectedOption = langObject,
-                                onOptionSelected = { selectedOption ->
-                                    viewModel.langObject.value = selectedOption
-                                }
-                            )
-                        }
+                        DropdownSelector(
+                            options = if (supportedLanguages is ApiResult.Success) supportedLanguages.data else emptyList(),
+                            selectedOption = langObject,
+                            onOptionSelected = { selectedOption ->
+                                viewModel.langObject.value = selectedOption
+                            }
+                        )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     FloatingActionButton(

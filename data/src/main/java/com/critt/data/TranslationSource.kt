@@ -1,6 +1,6 @@
 package com.critt.data
 
-//import com.critt.data.BuildConfig
+import com.critt.domain.SpeechData
 import com.google.gson.Gson
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -14,7 +14,7 @@ class TranslationSource(
     private var socketSubject: Socket? = null
     private var socketObject: Socket? = null
 
-    fun connectObject(languageSubject: String, languageObject: String): Flow<com.critt.domain.SpeechData> {
+    fun connectObject(languageSubject: String, languageObject: String): Flow<SpeechData> {
         /**
          * https://socketio.github.io/socket.io-client-java/initialization.html#auth
          * */
@@ -23,7 +23,7 @@ class TranslationSource(
         return initSocket(socketObject, getTranscriptionConfig(languageObject, languageSubject))
     }
 
-    fun connectSubject(languageSubject: String, languageObject: String): Flow<com.critt.domain.SpeechData> {
+    fun connectSubject(languageSubject: String, languageObject: String): Flow<SpeechData> {
         /**
          * https://socketio.github.io/socket.io-client-java/initialization.html#auth
          * */
@@ -37,12 +37,12 @@ class TranslationSource(
         socketObject?.emit("binaryAudioData", objectData)
     }
 
-    private fun initSocket(socket: Socket?, config: Map<String, Any>): Flow<com.critt.domain.SpeechData> = callbackFlow {
+    private fun initSocket(socket: Socket?, config: Map<String, Any>): Flow<SpeechData> = callbackFlow {
         socket?.connect()
         socket?.emit("startGoogleCloudStream", Gson().toJson(config))
 
         socket?.on("speechData") { args ->
-            Gson().fromJson(args[0].toString(), com.critt.domain.SpeechData::class.java).let {
+            Gson().fromJson(args[0].toString(), SpeechData::class.java).let {
                 println("Object speechData: $it")
                 trySend(it)
             }

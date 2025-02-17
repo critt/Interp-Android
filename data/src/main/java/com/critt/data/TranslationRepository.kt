@@ -1,5 +1,6 @@
 package com.critt.data
 
+import com.critt.domain.LanguageData
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -29,5 +30,5 @@ class TranslationRepository @Inject constructor(
     /** returns Flow<ApiResult<List<LanguageData>>?>
      *  this represents all of the languages we support for voice transcription and translation
      */
-    fun getSupportedLanguages(): Flow<ApiResult<List<com.critt.domain.LanguageData>>> = toResultFlow { languageSource.getSupportedLanguages() }
+    fun getSupportedLanguages(): Flow<ApiResult<List<LanguageData>>> = toResultFlow { languageSource.getSupportedLanguages() }
 }
