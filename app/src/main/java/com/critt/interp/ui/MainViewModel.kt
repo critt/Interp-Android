@@ -86,19 +86,24 @@ class MainViewModel @Inject constructor(
                 langObject.language
             )
                 .collect { res ->
+                    //TODO: This should be a lambda argument
                     Timber.d("speakerCurr: $speakerCurr")
                     if (res.isFinal) {
                         builderSubject.append(res.data)
                         _translationSubject.update { builderSubject.toString() }
                     } else {
-                       _translationSubject.update { builderSubject.toString() + res.data }
+                        _translationSubject.update { builderSubject.toString() + res.data }
                     }
                 }
         }
 
         viewModelScope.launch(context = Dispatchers.IO) {
-            translationRepo.connectObject(langSubject.language, langObject.language)
+            translationRepo.connectObject(
+                langSubject.language,
+                langObject.language
+            )
                 .collect { res ->
+                    //TODO: This should be a lambda argument
                     Timber.d("speakerCurr: $speakerCurr")
                     if (res.isFinal) {
                         builderObject.append(res.data)
