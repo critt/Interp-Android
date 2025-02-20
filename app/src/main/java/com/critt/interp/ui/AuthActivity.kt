@@ -16,6 +16,10 @@ import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+/**
+ * Quick and dirty boilerplate from Firebase docs for authentication
+ * so I can leave the backend deployed on a public IP with auth
+ * */
 @AndroidEntryPoint
 class AuthActivity : AppCompatActivity() {
     private val signInLauncher = registerForActivityResult(
