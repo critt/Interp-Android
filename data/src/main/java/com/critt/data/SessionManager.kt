@@ -13,12 +13,11 @@ import javax.inject.Singleton
 class SessionManager @Inject constructor(
     @ApplicationContext context: Context
 ) {
-    //TODO: Add token to http requests with an interceptor, and to sockets messages somehow (would be cool if it followed a similar pattern)
 
     private val sharedPreferences = EncryptedSharedPreferences.create(
         context,
         PREFS_NAME,
-        MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
+        MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(), // TODO: Exclude key from backup with exclusion rules
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )

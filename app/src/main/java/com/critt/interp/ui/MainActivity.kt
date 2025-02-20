@@ -35,6 +35,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    //TODO: Refactor to use androidx.lifecycle.viewmodel.compose.viewModel()
     private val viewModel: MainViewModel by viewModels()
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -62,6 +63,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             InterpTheme {
+                //TODO: Refactor to use androidx.lifecycle.viewmodel.compose.viewModel()
+                //val viewModel = viewModel<MainViewModel>()
                 MainView(viewModel)
             }
         }
@@ -135,20 +138,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //TODO: Refactor to use Scaffold
     @Composable
     @Preview
     fun MainView(viewModel: MainViewModel = viewModel()) {
         // StateFlow
         val supportedLanguages by viewModel.supportedLanguages.collectAsState()
+        // TODO: Refactor to use StateFlow
         // Compose State
         val langSubject = viewModel.langSubject
         val langObject = viewModel.langObject
 
-        //TODO: LiveData tech debt
+        //TODO: Refactor to use StateFlow
         val isConnected by viewModel.isConnected.observeAsState(false)
+
+        //TODO: Refactor to use lambda arguments for interactionSource callbacks passed down to OutputCard
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
-
         viewModel.speakerCurr = if (isPressed) Speaker.SUBJECT else Speaker.OBJECT
 
         InterpTheme {

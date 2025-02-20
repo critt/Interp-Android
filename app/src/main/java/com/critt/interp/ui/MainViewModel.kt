@@ -46,6 +46,7 @@ class MainViewModel @Inject constructor(
         MutableStateFlow<ApiResult<List<LanguageData>>>(ApiResult.Loading)
     val supportedLanguages = _supportedLanguages.asStateFlow()
 
+    // TODO: Refactor to use StateFlow
     // Compose State for selected languages
     var langSubject by mutableStateOf(defaultLangSubject)
         private set
@@ -54,6 +55,8 @@ class MainViewModel @Inject constructor(
 
     var isConnected = MutableLiveData(false) //TODO: this makes no sense
     private var jobRecord: Job? = null
+
+    //TODO: Refactor to use StateFlow
     var speakerCurr = Speaker.SUBJECT
 
     init {
@@ -110,6 +113,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun startRecording() {
+        // TODO: Handle this state better
         if (jobRecord == null) {
             jobRecord = viewModelScope.launch(context = Dispatchers.IO) {
                 audioSource.startRecording(::handleInput)
@@ -118,6 +122,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun stopRecording() {
+        // TODO: Handle this state better
         audioSource.stopRecording()
         jobRecord?.cancel()
         jobRecord = null
@@ -132,6 +137,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun disconnect() {
+        // TODO: Handle this state better
         isConnected.postValue(false)//TODO: this makes no sense
         translationRepo.disconnect()
     }
