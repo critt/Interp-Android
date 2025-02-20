@@ -153,9 +153,9 @@ class MainActivity : ComponentActivity() {
         val isConnected by viewModel.isConnected.observeAsState(false)
 
         //TODO: Refactor to use lambda arguments for interactionSource callbacks passed down to OutputCard
+        //TODO: callbacks should update speakerCurr state: viewModel.speakerCurr = if (isPressed) Speaker.SUBJECT else Speaker.OBJECT
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
-        // viewModel.speakerCurr = if (isPressed) Speaker.SUBJECT else Speaker.OBJECT
 
         InterpTheme {
             Column(
