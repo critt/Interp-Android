@@ -146,8 +146,8 @@ class MainActivity : ComponentActivity() {
         val supportedLanguages by viewModel.supportedLanguages.collectAsState()
         // TODO: Refactor to use StateFlow
         // Compose State
-        val langSubject = viewModel.langSubject
-        val langObject = viewModel.langObject
+        val langSubject = remember { viewModel.langSubject }
+        val langObject = remember { viewModel.langObject }
 
         //TODO: Refactor to use StateFlow
         val isConnected by viewModel.isConnected.observeAsState(false)
@@ -155,7 +155,7 @@ class MainActivity : ComponentActivity() {
         //TODO: Refactor to use lambda arguments for interactionSource callbacks passed down to OutputCard
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
-        viewModel.speakerCurr = if (isPressed) Speaker.SUBJECT else Speaker.OBJECT
+        // viewModel.speakerCurr = if (isPressed) Speaker.SUBJECT else Speaker.OBJECT
 
         InterpTheme {
             Column(
