@@ -1,9 +1,5 @@
 package com.critt.interp.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.critt.data.ApiResult
@@ -12,9 +8,11 @@ import com.critt.domain.LanguageData
 import com.critt.data.SessionManager
 import com.critt.domain.Speaker
 import com.critt.data.TranslationRepository
+import com.critt.domain.SpeechData
 import com.critt.domain.defaultLangObject
 import com.critt.domain.defaultLangSubject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,35 +27,33 @@ class MainViewModel @Inject constructor(
     private val translationRepo: TranslationRepository,
     private val sessionManager: SessionManager,
     private val audioSource: AudioSource
-) :
-    ViewModel() {
-
-    private val builderObject = StringBuilder()
-    private val builderSubject = StringBuilder()
-
-    // StateFlow for translations
-    private val _translationSubject = MutableStateFlow("")
-    val translationSubject = _translationSubject.asStateFlow()
-    private val _translationObject = MutableStateFlow("")
-    val translationObject = _translationObject.asStateFlow()
-
-    // StateFlow for supported languages
+) : ViewModel() {
+    // Supported languages state
     private val _supportedLanguages =
         MutableStateFlow<ApiResult<List<LanguageData>>>(ApiResult.Loading)
     val supportedLanguages = _supportedLanguages.asStateFlow()
 
-    // TODO: Refactor to use StateFlow
-    // Compose State for selected languages
-    var langSubject by mutableStateOf(defaultLangSubject)
-        private set
-    var langObject by mutableStateOf(defaultLangObject)
-        private set
+    // Current speaker state
+    private val _speakerCurr = MutableStateFlow(Speaker.OBJECT)
+    val speakerCurr = _speakerCurr.asStateFlow()
 
-    var isConnected = MutableLiveData(false) //TODO: this makes no sense
-    private var jobRecord: Job? = null
+    // Translation output state
+    private val _translationSubject = MutableStateFlow("")
+    val translationSubject = _translationSubject.asStateFlow()
+    private val _translationObject = MutableStateFlow("")
+    val translationObject = _translationObject.asStateFlow()
+    private val builderObject = StringBuilder()
+    private val builderSubject = StringBuilder()
 
-    //TODO: Refactor to use StateFlow
-    var speakerCurr = Speaker.SUBJECT
+    // Selected languages state
+    private val _langSubject = MutableStateFlow(defaultLangSubject)
+    val langSubject = _langSubject.asStateFlow()
+    private val _langObject = MutableStateFlow(defaultLangObject)
+    val langObject = _langObject.asStateFlow()
+
+    // Streaming state
+    private val _streamingState = MutableStateFlow<AudioStreamingState>(AudioStreamingState.Idle)
+    val streamingState = _streamingState.asStateFlow()
 
     init {
         viewModelScope.launch(context = Dispatchers.IO) {
@@ -67,83 +63,148 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun updateLangSubject(lang: LanguageData) {
-        langSubject = lang
-    }
-
-    fun updateLangObject(lang: LanguageData) {
-        langObject = lang
-    }
-
-    fun connect(): Boolean {
-        isConnected.postValue(true)  //TODO: this makes no sense
-        builderSubject.clear()
-        builderObject.clear()
-
-        viewModelScope.launch(context = Dispatchers.IO) {
-            translationRepo.connectSubject(
-                langSubject.language,
-                langObject.language
-            )
-                .collect { res ->
-                    //TODO: This should be a lambda argument
-                    Timber.d("speakerCurr: $speakerCurr")
-                    if (res.isFinal) {
-                        builderSubject.append(res.data)
-                        _translationSubject.update { builderSubject.toString() }
-                    } else {
-                        _translationSubject.update { builderSubject.toString() + res.data }
-                    }
-                }
+    fun updateSpeaker(subjectSpeaking: Boolean) {
+        when (subjectSpeaking) {
+            true -> _speakerCurr.update { Speaker.SUBJECT }
+            false -> _speakerCurr.update { Speaker.OBJECT }
         }
-
-        viewModelScope.launch(context = Dispatchers.IO) {
-            translationRepo.connectObject(
-                langSubject.language,
-                langObject.language
-            )
-                .collect { res ->
-                    //TODO: This should be a lambda argument
-                    Timber.d("speakerCurr: $speakerCurr")
-                    if (res.isFinal) {
-                        builderObject.append(res.data)
-                        _translationObject.update { builderObject.toString() }
-                    } else {
-                        _translationObject.update { builderObject.toString() + res.data }
-                    }
-                }
-        }
-
-        return true
     }
 
-    fun startRecording() {
-        // TODO: Handle this state better
-        if (jobRecord == null) {
-            jobRecord = viewModelScope.launch(context = Dispatchers.IO) {
-                audioSource.startRecording(::handleInput)
+    fun selectLangSubject(lang: LanguageData) {
+        _langSubject.update { lang }
+    }
+
+    fun selectLangObject(lang: LanguageData) {
+        _langObject.update { lang }
+    }
+
+    fun toggleStreaming() {
+        when (_streamingState.value) {
+            is AudioStreamingState.Idle -> startRecordingAndStreaming()
+            is AudioStreamingState.Streaming -> {
+                stopRecordingAndStreaming()
+                _streamingState.update { AudioStreamingState.Idle }
+            }
+
+            is AudioStreamingState.Error -> {
+                stopRecordingAndStreaming()
+                startRecordingAndStreaming()
             }
         }
     }
 
-    fun stopRecording() {
-        // TODO: Handle this state better
-        audioSource.stopRecording()
-        jobRecord?.cancel()
-        jobRecord = null
+    private fun startRecordingAndStreaming() {
+        // clear the translation output StringBuilders
+        builderSubject.clear()
+        builderObject.clear()
+
+        // open socket connection on the "subject" namespace
+        viewModelScope.launch(context = Dispatchers.IO) {
+            try {
+                translationRepo.connectSubject(
+                    languageSubject = langSubject.value.language,
+                    languageObject = langObject.value.language
+                ).collect { res ->
+                    onTextData(
+                        textData = res,
+                        translationState = _translationSubject,
+                        builder = builderSubject
+                    )
+                }
+            } catch (e: Exception) {
+                stopRecordingAndStreaming()
+                _streamingState.update {
+                    AudioStreamingState.Error(
+                        e.message ?: "subject socket: unknown error"
+                    )
+                }
+            }
+        }
+
+        // open socket connection on the "object" namespace
+        viewModelScope.launch(context = Dispatchers.IO) {
+            try {
+                translationRepo.connectObject(
+                    languageSubject = langSubject.value.language,
+                    languageObject = langObject.value.language
+                ).collect { res ->
+                    onTextData(
+                        textData = res,
+                        translationState = _translationObject,
+                        builder = builderObject
+                    )
+                }
+            } catch (e: Exception) {
+                stopRecordingAndStreaming()
+                _streamingState.update {
+                    AudioStreamingState.Error(
+                        e.message ?: "object socket: unknown error"
+                    )
+                }
+            }
+        }
+
+        // start recording
+        viewModelScope.launch(context = Dispatchers.IO) {
+            try {
+                audioSource.startRecording(onData = ::onAudioData)
+            } catch (e: Exception) {
+                _streamingState.update {
+                    AudioStreamingState.Error(
+                        e.message ?: "audioSource job: unknown error"
+                    )
+                }
+            }
+        }.invokeOnCompletion { cause ->
+            stopRecordingAndStreaming()
+            when (cause) {
+                null, is CancellationException -> _streamingState.update { AudioStreamingState.Idle }
+                else -> _streamingState.update {
+                    AudioStreamingState.Error(
+                        cause.message ?: "audioSource job completion handler: unknown error"
+                    )
+                }
+            }
+        }
+
+        _streamingState.update { AudioStreamingState.Streaming }
     }
 
-    fun handleInput(data: ByteArray) {
-        if (speakerCurr == Speaker.SUBJECT) {
-            translationRepo.onData(data, ByteArray(2048))
-        } else {
-            translationRepo.onData(ByteArray(2048), data)
+    private fun stopRecordingAndStreaming() {
+        audioSource.stopRecording()
+        translationRepo.disconnect()
+    }
+
+    fun onAudioData(data: ByteArray) {
+        when (speakerCurr.value) {
+            Speaker.SUBJECT -> translationRepo.onData(
+                subjectData = data,
+                objectData = ByteArray(2048)
+            )
+
+            Speaker.OBJECT -> translationRepo.onData(
+                subjectData = ByteArray(2048),
+                objectData = data
+            )
         }
     }
 
-    fun disconnect() {
-        // TODO: Handle this state better
-        isConnected.postValue(false)//TODO: this makes no sense
-        translationRepo.disconnect()
+    private fun onTextData(
+        textData: SpeechData,
+        translationState: MutableStateFlow<String>,
+        builder: StringBuilder
+    ) {
+        if (textData.isFinal) {
+            builder.append(textData.data)
+            translationState.update { builder.toString() }
+        } else {
+            translationState.update { builder.toString() + textData.data }
+        }
     }
+}
+
+sealed class AudioStreamingState {
+    object Idle : AudioStreamingState()
+    object Streaming : AudioStreamingState()
+    data class Error(val message: String) : AudioStreamingState()
 }
