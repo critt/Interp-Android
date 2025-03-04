@@ -9,6 +9,5 @@ A native Android client for a sockets/gRPC/GCP bidirectional translation system.
 - Supports 100+ languages
 
 ### Prerequisites
-- My [fork](https://github.com/critt/transcription_service) of [this repo](saharmor/realtime-transcription-playground), which serves as the server for this client. This client does not interact with GCP directly.
-- GCP account with [Cloud Speech-to-Text API](https://cloud.google.com/speech-to-text/?hl=en), [Cloud Translation API](https://cloud.google.com/translate?hl=en), a service account, and a JSON credentials file for the service account.
-    - These are actually prerequisites for the server (the fork mentioned above), not the client (this repo). I'm listing them here so you know what you are in for from the start, as these GCP services aren't necessarily free. The backend repo has more information on its own installation and setup. Just make sure to enable the translation API in GCP in addition to the Speech-to-Text API.
+- This [python app](https://github.com/critt/transcription_service) running somewhere, which serves as the backend for this app. It provides a REST interface for feature enumeration and authentication, and WebSockets channels for realtime audio transcription and translation.
+  - Once you have the backend running, update the file `paths.properties` with the its's URL.
