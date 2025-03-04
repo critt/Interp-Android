@@ -8,6 +8,6 @@ A native Android client for a sockets/gRPC/GCP bidirectional translation system.
 - Real-time bidirectional speech translation and interpretation to facilitate a conversation between two people that don't speak the same language
 - Supports 100+ languages
 
-####Prerequisites
+#### Prerequisites
 - This [python app](https://github.com/critt/Interp-Service) running somewhere, which serves as the backend for this app. It provides a REST interface for feature enumeration and authentication, and WebSockets channels for realtime audio transcription and translation
   - Once you have the backend running, update the file `paths.properties` in this project with its's URL and rebuild
