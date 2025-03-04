@@ -9,5 +9,5 @@ A native Android client for a sockets/gRPC/GCP bidirectional translation system.
 - Supports 100+ languages
 
 ### Prerequisites
-- This [python app](https://github.com/critt/transcription_service) running somewhere, which serves as the backend for this app. It provides a REST interface for feature enumeration and authentication, and WebSockets channels for realtime audio transcription and translation
+- This [python app](https://github.com/critt/Interp-Service) running somewhere, which serves as the backend for this app. It provides a REST interface for feature enumeration and authentication, and WebSockets channels for realtime audio transcription and translation
   - Once you have the backend running, update the file `paths.properties` with the its's URL
