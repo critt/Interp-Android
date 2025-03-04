@@ -4,9 +4,9 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,16 +16,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critt.data.ApiResult
+import com.critt.domain.LanguageData
 import com.critt.domain.Speaker
 import com.critt.interp.ui.components.DropdownSelector
 import com.critt.ui_common.theme.InterpTheme
@@ -34,59 +36,34 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    //TODO: Refactor to use androidx.lifecycle.viewmodel.compose.viewModel()
-    private val viewModel: MainViewModel by viewModels()
-
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            startRecording()
-        } else {
-            // Handle the case where the user denied the permission
-            // You can show a message or disable the functionality that requires the permission
-        }
-    }
-
-    private fun startRecording() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            viewModel.startRecording()
-        } else {
-            requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             InterpTheme {
-                //TODO: Refactor to use androidx.lifecycle.viewmodel.compose.viewModel()
-                //val viewModel = viewModel<MainViewModel>()
-                MainView(viewModel)
+                MainView(viewModel<MainViewModel>())
             }
         }
     }
 
     @Composable
-    fun TranslationGroup(speaker: Speaker, interactionSource: MutableInteractionSource? = null) {
+    fun TranslationGroup(
+        translationText: String = "",
+        speaker: Speaker,
+        langSubject: LanguageData,
+        langObject: LanguageData,
+        interactionSource: MutableInteractionSource? = null
+    ) {
         InterpTheme {
             Column(modifier = Modifier.padding(16.dp)) {
-                LanguageDisplay(speaker)
+                LanguageDisplay(speaker, langSubject, langObject)
                 Spacer(modifier = Modifier.height(12.dp))
-                OutputCard(speaker, interactionSource)
+                OutputCard(translationText, interactionSource)
             }
         }
     }
 
     @Composable
-    fun LanguageDisplay(speaker: Speaker) {
-        //TODO: State Hoisting
-        val langSubject = viewModel.langSubject
-        val langObject = viewModel.langObject
-
+    fun LanguageDisplay(speaker: Speaker, langSubject: LanguageData, langObject: LanguageData) {
         InterpTheme {
             Row {
                 Text(
@@ -111,13 +88,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun OutputCard(user: Speaker, interactionSource: MutableInteractionSource? = null) {
-        //TODO: State Hoisting
-        val output by when (user) {
-            Speaker.SUBJECT -> viewModel.translationObject.collectAsState()
-            Speaker.OBJECT -> viewModel.translationSubject.collectAsState()
-        }
-
+    fun OutputCard(translationText: String, interactionSource: MutableInteractionSource? = null) {
         InterpTheme {
             Surface(
                 modifier = Modifier
@@ -130,7 +101,7 @@ class MainActivity : ComponentActivity() {
                 shadowElevation = 4.dp
             ) {
                 Text(
-                    output ?: "",
+                    text = translationText,
                     modifier = Modifier.padding(8.dp),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -142,20 +113,60 @@ class MainActivity : ComponentActivity() {
     @Composable
     @Preview
     fun MainView(viewModel: MainViewModel = viewModel()) {
-        // StateFlow
+        val context = LocalContext.current
+
+        // State to track if the audio recording permission is granted
+        var hasRecordingPermission by rememberSaveable {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+            )
+        }
+
+        val requestPermissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                hasRecordingPermission = isGranted
+            }
+        )
+
+        // ViewModel StateFlows
         val supportedLanguages by viewModel.supportedLanguages.collectAsState()
-        // TODO: Refactor to use StateFlow
-        // Compose State
-        val langSubject = remember { viewModel.langSubject }
-        val langObject = remember { viewModel.langObject }
+        val langSubject by viewModel.langSubject.collectAsState()
+        val langObject by viewModel.langObject.collectAsState()
+        val translationSubject by viewModel.translationSubject.collectAsState()
+        val translationObject by viewModel.translationObject.collectAsState()
+        val streamingState by viewModel.streamingState.collectAsState()
 
-        //TODO: Refactor to use StateFlow
-        val isConnected by viewModel.isConnected.observeAsState(false)
-
-        //TODO: Refactor to use lambda arguments for interactionSource callbacks passed down to OutputCard
-        //TODO: callbacks should update speakerCurr state: viewModel.speakerCurr = if (isPressed) Speaker.SUBJECT else Speaker.OBJECT
+        /** Local state -> LaunchedEffect -> ViewModel StateFlow */
+        // Language selector for Subject speaker
+        var uiSelectedLangSubject by remember { mutableStateOf(langSubject) }
+        LaunchedEffect(uiSelectedLangSubject) {
+            viewModel.selectLangSubject(uiSelectedLangSubject)
+        }
+        // Language selector for Object speaker
+        var uiSelectedLangObject by remember { mutableStateOf(langObject) }
+        LaunchedEffect(uiSelectedLangObject) {
+            viewModel.selectLangObject(uiSelectedLangObject)
+        }
+        // Interaction source (pressing down on the lower OutputCard) for current Speaker
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
+        LaunchedEffect(isPressed) {
+            viewModel.updateSpeaker(subjectSpeaking = isPressed)
+        }
+        // Streaming state toggle (FAB)
+        var toggleSideEffect by remember { mutableStateOf<(() -> Unit)?>(null) }
+        LaunchedEffect(toggleSideEffect, hasRecordingPermission) {
+            if (!hasRecordingPermission) {
+                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            } else {
+                toggleSideEffect?.invoke()
+                toggleSideEffect = null
+            }
+        }
 
         InterpTheme {
             Column(
@@ -168,12 +179,20 @@ class MainActivity : ComponentActivity() {
                         .weight(.40F)
                         .rotate(180F)
                 ) {
-                    TranslationGroup(Speaker.OBJECT)
+                    TranslationGroup(
+                        translationText = translationObject,
+                        speaker = Speaker.OBJECT,
+                        langSubject = langSubject,
+                        langObject = langObject,
+                    )
                 }
                 Box(modifier = Modifier.weight(.40F)) {
                     TranslationGroup(
-                        Speaker.SUBJECT,
-                        interactionSource
+                        translationText = translationSubject,
+                        speaker = Speaker.SUBJECT,
+                        langSubject = langSubject,
+                        langObject = langObject,
+                        interactionSource = interactionSource
                     )
                 }
                 Row(
@@ -185,10 +204,12 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Box(modifier = Modifier.weight(.375F)) {
                         DropdownSelector(
-                            options = (supportedLanguages as? ApiResult.Success)?.data ?: emptyList(),
+                            options = (supportedLanguages as? ApiResult.Success)?.data
+                                ?: emptyList(),
                             selectedOption = langSubject,
                             onOptionSelected = { selectedOption ->
-                                viewModel.updateLangSubject(selectedOption)
+                                // Update the local UI state
+                                uiSelectedLangSubject = selectedOption
                             }
                         )
                     }
@@ -197,35 +218,27 @@ class MainActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(modifier = Modifier.weight(.375F)) {
                         DropdownSelector(
-                            options = (supportedLanguages as? ApiResult.Success)?.data ?: emptyList(),
+                            options = (supportedLanguages as? ApiResult.Success)?.data
+                                ?: emptyList(),
                             selectedOption = langObject,
                             onOptionSelected = { selectedOption ->
-                                viewModel.updateLangObject(selectedOption)
+                                // Update the local UI state
+                                uiSelectedLangObject = selectedOption
                             }
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     FloatingActionButton(
                         onClick = {
-                            when (isConnected) {
-                                true -> {
-                                    viewModel.stopRecording()
-                                    viewModel.disconnect()
-                                }
-
-                                false -> {
-                                    if (viewModel.connect()) {
-                                        startRecording()
-                                    }
-                                }
-                            }
+                            toggleSideEffect = { viewModel.toggleStreaming() }
                         },
                         modifier = Modifier.weight(.15F)
                     ) {
                         Text(
-                            "☁", color = when (isConnected) {
-                                true -> MaterialTheme.colorScheme.onSecondary
-                                false -> MaterialTheme.colorScheme.onPrimary
+                            "☁", color = when (streamingState) {
+                                AudioStreamingState.Streaming -> MaterialTheme.colorScheme.onSecondary
+                                AudioStreamingState.Idle -> MaterialTheme.colorScheme.onPrimary
+                                is AudioStreamingState.Error -> MaterialTheme.colorScheme.onError
                             }
                         )
                     }
