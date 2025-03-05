@@ -4,17 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.critt.data.ApiResult
 import com.critt.data.AudioSource
+import com.critt.data.LanguageRepository
 import com.critt.domain.LanguageData
 import com.critt.data.SessionManager
 import com.critt.domain.Speaker
-import com.critt.data.TranslationRepository
+import com.critt.data.TranslationSource
 import com.critt.domain.SpeechData
 import com.critt.domain.defaultLangObject
 import com.critt.domain.defaultLangSubject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,9 +24,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val translationRepo: TranslationRepository,
     private val sessionManager: SessionManager,
-    private val audioSource: AudioSource
+    private val audioSource: AudioSource,
+    private val translationSource: TranslationSource,
+    private val languageRepo: LanguageRepository
 ) : ViewModel() {
     // Supported languages state
     private val _supportedLanguages =
@@ -55,11 +56,50 @@ class MainViewModel @Inject constructor(
     private val _streamingState = MutableStateFlow<AudioStreamingState>(AudioStreamingState.Idle)
     val streamingState = _streamingState.asStateFlow()
 
+    // onAudioData lambdas
+    private var onAudioDataSubject: (ByteArray?) -> Unit = {}
+    private var onAudioDataObject: (ByteArray?) -> Unit = {}
+
     init {
         viewModelScope.launch(context = Dispatchers.IO) {
-            translationRepo.getSupportedLanguages().collect { res ->
+            languageRepo.getSupportedLanguages().collect { res ->
                 _supportedLanguages.update { res }
             }
+        }
+
+        viewModelScope.launch {
+            translationSource.speechDataSubject.collect {
+                it?.let {
+                    onTextData(it, _translationSubject, builderSubject)
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            translationSource.speechDataObject.collect {
+                it?.let {
+                    onTextData(it, _translationObject, builderObject)
+                }
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Clean up sockets
+        translationSource.disconnectAllSockets()
+    }
+
+    private fun onTextData(
+        textData: SpeechData,
+        translationState: MutableStateFlow<String>,
+        builder: StringBuilder
+    ) {
+        if (textData.isFinal) {
+            builder.append(textData.data)
+            translationState.update { builder.toString() }
+        } else {
+            translationState.update { builder.toString() + textData.data }
         }
     }
 
@@ -101,16 +141,11 @@ class MainViewModel @Inject constructor(
         // open socket connection on the "subject" namespace
         viewModelScope.launch(context = Dispatchers.IO) {
             try {
-                translationRepo.connectSubject(
+                onAudioDataSubject = translationSource.connect(
                     languageSubject = langSubject.value.language,
-                    languageObject = langObject.value.language
-                ).collect { res ->
-                    onTextData(
-                        textData = res,
-                        translationState = _translationSubject,
-                        builder = builderSubject
-                    )
-                }
+                    languageObject = langObject.value.language,
+                    Speaker.SUBJECT
+                )
             } catch (e: Exception) {
                 stopRecordingAndStreaming()
                 _streamingState.update {
@@ -124,16 +159,11 @@ class MainViewModel @Inject constructor(
         // open socket connection on the "object" namespace
         viewModelScope.launch(context = Dispatchers.IO) {
             try {
-                translationRepo.connectObject(
+                onAudioDataObject = translationSource.connect(
                     languageSubject = langSubject.value.language,
-                    languageObject = langObject.value.language
-                ).collect { res ->
-                    onTextData(
-                        textData = res,
-                        translationState = _translationObject,
-                        builder = builderObject
-                    )
-                }
+                    languageObject = langObject.value.language,
+                    Speaker.OBJECT
+                )
             } catch (e: Exception) {
                 stopRecordingAndStreaming()
                 _streamingState.update {
@@ -172,33 +202,19 @@ class MainViewModel @Inject constructor(
 
     private fun stopRecordingAndStreaming() {
         audioSource.stopRecording()
-        translationRepo.disconnect()
+        translationSource.disconnectAllSockets()
     }
 
     fun onAudioData(data: ByteArray) {
         when (speakerCurr.value) {
-            Speaker.SUBJECT -> translationRepo.onData(
-                subjectData = data,
-                objectData = ByteArray(2048)
-            )
-
-            Speaker.OBJECT -> translationRepo.onData(
-                subjectData = ByteArray(2048),
-                objectData = data
-            )
-        }
-    }
-
-    private fun onTextData(
-        textData: SpeechData,
-        translationState: MutableStateFlow<String>,
-        builder: StringBuilder
-    ) {
-        if (textData.isFinal) {
-            builder.append(textData.data)
-            translationState.update { builder.toString() }
-        } else {
-            translationState.update { builder.toString() + textData.data }
+            Speaker.SUBJECT -> {
+                onAudioDataSubject(data)
+                onAudioDataObject(ByteArray(2048))
+            }
+            Speaker.OBJECT -> {
+                onAudioDataSubject(ByteArray(2048))
+                onAudioDataObject(data)
+            }
         }
     }
 }

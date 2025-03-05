@@ -1,82 +1,139 @@
 package com.critt.data
 
-import com.critt.data.BuildConfig
+import com.critt.domain.Speaker
 import com.critt.domain.SpeechData
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import io.socket.client.IO
 import io.socket.client.Socket
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import timber.log.Timber
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import java.net.URI
+import java.util.concurrent.ConcurrentHashMap
 
 class TranslationSource(
     private val sessionManager: SessionManager
 ) {
-    private var socketSubject: Socket? = null
-    private var socketObject: Socket? = null
+    private val _speechDataSubject = MutableStateFlow<SpeechData?>(null)
+    val speechDataSubject = _speechDataSubject.asStateFlow()
 
-    fun connectObject(languageSubject: String, languageObject: String): Flow<SpeechData> {
-        /**
-         * https://socketio.github.io/socket.io-client-java/initialization.html#auth
-         * */
-        val options: IO.Options = IO.Options.builder().setAuth(mapOf("token" to sessionManager.getAuthToken())).build()
-        socketObject = IO.socket(BuildConfig.API_BASE_URL + "object", options)
-        return initSocket(socketObject, getTranscriptionConfig(languageObject, languageSubject))
-    }
+    private val _speechDataObject = MutableStateFlow<SpeechData?>(null)
+    val speechDataObject = _speechDataObject.asStateFlow()
 
-    fun connectSubject(languageSubject: String, languageObject: String): Flow<SpeechData> {
-        /**
-         * https://socketio.github.io/socket.io-client-java/initialization.html#auth
-         * */
-        val options: IO.Options = IO.Options.builder().setAuth(mapOf("token" to sessionManager.getAuthToken())).build()
-        socketSubject = IO.socket(BuildConfig.API_BASE_URL + "subject", options)
-        return initSocket(socketSubject, getTranscriptionConfig(languageSubject, languageObject))
-    }
+    private val openSockets = ConcurrentHashMap<Speaker, Socket>()
 
-    fun onData(subjectData: ByteArray?, objectData: ByteArray?) {
-        socketSubject?.emit("binaryAudioData", subjectData)
-        socketObject?.emit("binaryAudioData", objectData)
-    }
+    fun connect(
+        languageSubject: String,
+        languageObject: String,
+        speaker: Speaker
+    ): (ByteArray?) -> Unit {
+        val socket = initSocket(speaker)
+        val gson: Gson = GsonBuilder().create()
 
-    private fun initSocket(socket: Socket?, config: Map<String, Any>): Flow<SpeechData> = callbackFlow { // Cold Flow
-        Timber.d("initSocket() ::  config = $config")
+        socket.on(EVENT_TEXT_DATA) { args ->
+            println("$EVENT_TEXT_DATA received")
 
-        socket?.connect()
-        socket?.emit("startGoogleCloudStream", Gson().toJson(config))
+            try {
+                val speechData = gson.fromJson(args[0].toString(), SpeechData::class.java)
+                println("$EVENT_TEXT_DATA: $speechData")
 
-        socket?.on("speechData") { args ->
-            Gson().fromJson(args[0].toString(), SpeechData::class.java).let {
-                println("Object speechData: $it")
-                trySend(it)
+                when (speaker) {
+                    Speaker.SUBJECT -> _speechDataSubject.update { speechData }
+                    Speaker.OBJECT -> _speechDataObject.update { speechData }
+                }
+            } catch (e: Exception) {
+                // 7. Handle parsing errors
+                println("Error parsing speechData: ${e.message}")
             }
         }
 
-        awaitClose {
-            socket?.emit("endGoogleCloudStream")
-            socket?.off("speechData")
-            socket?.disconnect()
+        socket.connect()
+
+        socket.emit(
+            EVENT_START_GOOGLE_CLOUD_STREAM,
+            gson.toJson(getTranscriptionConfig(languageSubject, languageObject, speaker))
+        )
+
+        return {
+            onAudioData(speaker, it)
         }
     }
 
-    fun disconnect() {
-        socketObject?.emit("endGoogleCloudStream")
-        socketObject?.off("speechData")
-        socketObject?.disconnect()
-
-        socketSubject?.emit("endGoogleCloudStream")
-        socketSubject?.off("speechData")
-        socketSubject?.disconnect()
+    private fun onAudioData(speaker: Speaker, audioData: ByteArray?) {
+        openSockets[speaker]?.emit(EVENT_AUDIO_DATA, audioData) ?: run {
+            println("onAudioData():: not emitting data: ${speaker.name} socket is null")
+        }
     }
 
-    private fun getTranscriptionConfig(languageSubject: String, languageObject: String) =
-        mapOf(
-            "audio" to mapOf(
-                "encoding" to "LINEAR16",
-                "sampleRateHertz" to 16000,
-                "languageCode" to languageSubject
-            ),
-            "interimResults" to true,
-            "targetLanguage" to languageObject
-        )
+    private fun disconnectSocket(socket: Socket) {
+        listOf(
+            { socket.emit(EVENT_END_GOOGLE_CLOUD_STREAM) },
+            { socket.off(EVENT_TEXT_DATA) },
+            { socket.disconnect() }
+        ).forEach { action ->
+            try {
+                action()
+            } catch (e: Exception) {
+                println("Error during socket cleanup: ${e.message}")
+            }
+        }
+        println("Socket disconnected")
+    }
+
+    fun disconnectAllSockets() {
+        for (socket in openSockets.values) {
+            disconnectSocket(socket)
+        }
+
+        openSockets.clear()
+    }
+
+    private fun initSocket(speaker: Speaker): Socket {
+        val socketChannel = when (speaker) {
+            Speaker.SUBJECT -> CHANNEL_SUBJECT
+            Speaker.OBJECT -> CHANNEL_OBJECT
+        }
+
+        val socketUri = URI.create("${BuildConfig.API_BASE_URL}$socketChannel")
+
+        /**
+         * https://socketio.github.io/socket.io-client-java/initialization.html#auth
+         * */
+        val socketOptions: IO.Options = IO.Options.builder()
+            .setAuth(mapOf(AUTH_TOKEN_KEY to sessionManager.getAuthToken()))
+            .build()
+
+        val socket: Socket = IO.socket(socketUri, socketOptions)
+
+        // clean up and remove existing socket if it exists for the speaker
+        openSockets[speaker]?.let {
+            disconnectSocket(it)
+            openSockets.remove(speaker)
+        }
+
+        openSockets[speaker] = socket
+        return socket
+    }
+
+    companion object {
+        private const val EVENT_TEXT_DATA = "speechData"
+        private const val EVENT_AUDIO_DATA = "binaryAudioData"
+        private const val EVENT_START_GOOGLE_CLOUD_STREAM = "startGoogleCloudStream"
+        private const val EVENT_END_GOOGLE_CLOUD_STREAM = "endGoogleCloudStream"
+        private const val CHANNEL_SUBJECT = "subject"
+        private const val CHANNEL_OBJECT = "object"
+        private const val AUTH_TOKEN_KEY = "token"
+
+        private fun getTranscriptionConfig(languageSubject: String, languageObject: String, speaker: Speaker) =
+            mapOf(
+                "audio" to mapOf(
+                    "encoding" to "LINEAR16",
+                    "sampleRateHertz" to 16000,
+                    "languageCode" to if (speaker == Speaker.SUBJECT) languageSubject else languageObject
+                ),
+                "interimResults" to true,
+                "targetLanguage" to if (speaker == Speaker.SUBJECT) languageObject else languageSubject
+            )
+    }
 }

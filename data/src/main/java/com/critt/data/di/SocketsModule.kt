@@ -5,14 +5,16 @@ import com.critt.data.TranslationSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dagger.hilt.android.components.ViewModelComponent
+import dagger.hilt.android.scopes.ViewModelScoped
 
 @Module
-@InstallIn(SingletonComponent::class)
+@InstallIn(ViewModelComponent::class)
 object SocketsModule {
     @Provides
-    @Singleton
-    fun provideSocketsService(sessionManager: SessionManager): TranslationSource =
+    @ViewModelScoped
+    fun provideSocketsService(
+        sessionManager: SessionManager
+    ): TranslationSource =
         TranslationSource(sessionManager)
 }
