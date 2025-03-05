@@ -9,6 +9,7 @@ import io.socket.client.Socket
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import timber.log.Timber
 import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
 
@@ -32,11 +33,11 @@ class TranslationSource(
         val gson: Gson = GsonBuilder().create()
 
         socket.on(EVENT_TEXT_DATA) { args ->
-            println("$EVENT_TEXT_DATA received")
+            Timber.d("$EVENT_TEXT_DATA received")
 
             try {
                 val speechData = gson.fromJson(args[0].toString(), SpeechData::class.java)
-                println("$EVENT_TEXT_DATA: $speechData")
+                Timber.d("$EVENT_TEXT_DATA: $speechData")
 
                 when (speaker) {
                     Speaker.SUBJECT -> _speechDataSubject.update { speechData }
@@ -44,7 +45,7 @@ class TranslationSource(
                 }
             } catch (e: Exception) {
                 // 7. Handle parsing errors
-                println("Error parsing speechData: ${e.message}")
+                Timber.e("Error parsing speechData: ${e.message}")
             }
         }
 
@@ -62,7 +63,7 @@ class TranslationSource(
 
     private fun onAudioData(speaker: Speaker, audioData: ByteArray?) {
         openSockets[speaker]?.emit(EVENT_AUDIO_DATA, audioData) ?: run {
-            println("onAudioData():: not emitting data: ${speaker.name} socket is null")
+            Timber.i("onAudioData():: not emitting data: ${speaker.name} socket is null")
         }
     }
 
@@ -75,10 +76,10 @@ class TranslationSource(
             try {
                 action()
             } catch (e: Exception) {
-                println("Error during socket cleanup: ${e.message}")
+                Timber.e("Error during socket cleanup: ${e.message}")
             }
         }
-        println("Socket disconnected")
+        Timber.d("Socket disconnected")
     }
 
     fun disconnectAllSockets() {

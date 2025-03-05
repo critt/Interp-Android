@@ -6,11 +6,11 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
+
+// TODO: This whole thing is a hacky POC
+// TODO: Redesign it from the ground up
 class AudioSource(
     private val sampleRate: Int = 16000,
     private val bufferSize: Int = 2048

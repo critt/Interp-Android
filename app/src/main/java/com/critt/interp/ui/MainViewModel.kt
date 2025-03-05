@@ -6,7 +6,6 @@ import com.critt.data.ApiResult
 import com.critt.data.AudioSource
 import com.critt.data.LanguageRepository
 import com.critt.domain.LanguageData
-import com.critt.data.SessionManager
 import com.critt.domain.Speaker
 import com.critt.data.TranslationSource
 import com.critt.domain.SpeechData
@@ -19,12 +18,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val sessionManager: SessionManager,
     private val audioSource: AudioSource,
     private val translationSource: TranslationSource,
     private val languageRepo: LanguageRepository
