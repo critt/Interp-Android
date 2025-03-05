@@ -27,8 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critt.data.ApiResult
-import com.critt.domain.LanguageData
-import com.critt.domain.Speaker
 import com.critt.interp.ui.components.DropdownSelector
 import com.critt.ui_common.theme.InterpTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -48,14 +46,13 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun TranslationGroup(
         translationText: String = "",
-        speaker: Speaker,
-        langSubject: LanguageData,
-        langObject: LanguageData,
+        textFromLanguage: String,
+        textToLanguage: String,
         interactionSource: MutableInteractionSource? = null
     ) {
         InterpTheme {
             Column(modifier = Modifier.padding(16.dp)) {
-                LanguageDisplay(speaker, langSubject, langObject)
+                LanguageDisplay(textFromLanguage, textToLanguage)
                 Spacer(modifier = Modifier.height(12.dp))
                 OutputCard(translationText, interactionSource)
             }
@@ -63,24 +60,18 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun LanguageDisplay(speaker: Speaker, langSubject: LanguageData, langObject: LanguageData) {
+    fun LanguageDisplay(textFromLanguage: String, textToLanguage: String) {
         InterpTheme {
             Row {
                 Text(
-                    when (speaker) {
-                        Speaker.SUBJECT -> langObject.name
-                        Speaker.OBJECT -> langSubject.name
-                    },
+                    text = textFromLanguage,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("⇌", color = MaterialTheme.colorScheme.onBackground)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    when (speaker) {
-                        Speaker.SUBJECT -> langSubject.name
-                        Speaker.OBJECT -> langObject.name
-                    },
+                    text = textToLanguage,
                     color = MaterialTheme.colorScheme.onBackground
                 )
             }
@@ -141,22 +132,28 @@ class MainActivity : ComponentActivity() {
         val streamingState by viewModel.streamingState.collectAsState()
 
         /** Local state -> LaunchedEffect -> ViewModel StateFlow */
-        // Language selector for Subject speaker
+        // Language selector for Subject Speaker (the user)
         var uiSelectedLangSubject by remember { mutableStateOf(langSubject) }
         LaunchedEffect(uiSelectedLangSubject) {
             viewModel.selectLangSubject(uiSelectedLangSubject)
         }
-        // Language selector for Object speaker
+
+        // Language selector for Object Speaker (to whom the user is talking)
         var uiSelectedLangObject by remember { mutableStateOf(langObject) }
         LaunchedEffect(uiSelectedLangObject) {
             viewModel.selectLangObject(uiSelectedLangObject)
         }
-        // Interaction source (pressing down on the lower OutputCard) for current Speaker
+
+        // Interaction source applied to the lower OutputCard
+        // Allows the OutputCard facing the user to be used as an "I'm talking, now they are talking" toggle
+        // The user holds it down while talking
+        // This is how we know which language to translate the audio data into
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
         LaunchedEffect(isPressed) {
             viewModel.updateSpeaker(subjectSpeaking = isPressed)
         }
+
         // Streaming state toggle (FAB)
         var toggleSideEffect by remember { mutableStateOf<(() -> Unit)?>(null) }
         LaunchedEffect(toggleSideEffect, hasRecordingPermission) {
@@ -180,18 +177,16 @@ class MainActivity : ComponentActivity() {
                         .rotate(180F)
                 ) {
                     TranslationGroup(
-                        translationText = translationObject,
-                        speaker = Speaker.OBJECT,
-                        langSubject = langSubject,
-                        langObject = langObject,
+                        translationText = translationSubject,
+                        textFromLanguage = langSubject.name,
+                        textToLanguage = langObject.name,
                     )
                 }
                 Box(modifier = Modifier.weight(.40F)) {
                     TranslationGroup(
-                        translationText = translationSubject,
-                        speaker = Speaker.SUBJECT,
-                        langSubject = langSubject,
-                        langObject = langObject,
+                        translationText = translationObject,
+                        textFromLanguage = langObject.name,
+                        textToLanguage = langSubject.name,
                         interactionSource = interactionSource
                     )
                 }
