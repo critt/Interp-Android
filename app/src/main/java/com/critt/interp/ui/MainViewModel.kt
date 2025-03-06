@@ -12,12 +12,13 @@ import com.critt.domain.SpeechData
 import com.critt.domain.defaultLangObject
 import com.critt.domain.defaultLangSubject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -67,7 +68,12 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             translationSource.speechDataSubject.collect {
                 it?.let {
-                    onTextData(it, _translationSubject, builderSubject)
+                    onTextData(
+                        it,
+                        _translationSubject,
+                        builderSubject,
+                        Locale(langObject.value.language)
+                    )
                 }
             }
         }
@@ -75,7 +81,12 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             translationSource.speechDataObject.collect {
                 it?.let {
-                    onTextData(it, _translationObject, builderObject)
+                    onTextData(
+                        it,
+                        _translationObject,
+                        builderObject,
+                        Locale(langSubject.value.language)
+                    )
                 }
             }
         }
@@ -90,11 +101,15 @@ class MainViewModel @Inject constructor(
     private fun onTextData(
         textData: SpeechData,
         translationState: MutableStateFlow<String>,
-        builder: StringBuilder
+        builder: StringBuilder,
+        locale: Locale
     ) {
         if (textData.isFinal) {
             builder.append(textData.data)
-            translationState.update { builder.toString() }
+            translationState.update {
+                builder.toString()
+                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
+            }
         } else {
             translationState.update { builder.toString() + textData.data }
         }
@@ -144,6 +159,7 @@ class MainViewModel @Inject constructor(
                     Speaker.SUBJECT
                 )
             } catch (e: Exception) {
+                Timber.e(e.message)
                 stopRecordingAndStreaming()
                 _streamingState.update {
                     AudioStreamingState.Error(
@@ -162,6 +178,7 @@ class MainViewModel @Inject constructor(
                     Speaker.OBJECT
                 )
             } catch (e: Exception) {
+                Timber.e(e.message)
                 stopRecordingAndStreaming()
                 _streamingState.update {
                     AudioStreamingState.Error(
@@ -174,21 +191,13 @@ class MainViewModel @Inject constructor(
         // start recording
         viewModelScope.launch(context = Dispatchers.IO) {
             try {
-                audioSource.startRecording(onData = ::onAudioData)
+                audioSource.startRecording(viewModelScope, onData = ::onAudioData)
             } catch (e: Exception) {
+                Timber.e(e.message)
+                stopRecordingAndStreaming()
                 _streamingState.update {
                     AudioStreamingState.Error(
                         e.message ?: "audioSource job: unknown error"
-                    )
-                }
-            }
-        }.invokeOnCompletion { cause ->
-            stopRecordingAndStreaming()
-            when (cause) {
-                null, is CancellationException -> _streamingState.update { AudioStreamingState.Idle }
-                else -> _streamingState.update {
-                    AudioStreamingState.Error(
-                        cause.message ?: "audioSource job completion handler: unknown error"
                     )
                 }
             }
@@ -208,6 +217,7 @@ class MainViewModel @Inject constructor(
                 onAudioDataSubject(data)
                 onAudioDataObject(ByteArray(2048))
             }
+
             Speaker.OBJECT -> {
                 onAudioDataSubject(ByteArray(2048))
                 onAudioDataObject(data)
