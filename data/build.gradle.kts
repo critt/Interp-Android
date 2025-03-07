@@ -66,8 +66,6 @@ dependencies {
     kapt(Dependencies.Hilt.ANDROID_COMPILER)
     implementation(Dependencies.Hilt.ANDROID)
 
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
-
     //testing
     testImplementation(Dependencies.Testing.JUNIT)
     testImplementation(Dependencies.Testing.JUNIT_JUPITER)
