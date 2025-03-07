@@ -70,9 +70,6 @@ dependencies {
     kapt(Dependencies.Hilt.ANDROID_COMPILER)
     implementation(Dependencies.Hilt.ANDROID)
 
-    //lifecycle (currently using this for Flow.asLiveData())
-    implementation(Dependencies.Lifecycle.LIVEDATA)
-
     //material theme
     implementation(Dependencies.Material.MATERIAL)
 

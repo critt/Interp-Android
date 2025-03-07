@@ -49,11 +49,6 @@ object Dependencies {
         const val MATERIAL = "com.google.android.material:material:1.12.0"
     }
 
-    object Lifecycle {
-        //(currently using this for Flow.asLiveData())
-        const val LIVEDATA = "androidx.lifecycle:lifecycle-livedata-ktx:2.8.7"
-    }
-
     object Testing {
         const val JUNIT = "junit:junit:4.13.2"
         const val JUNIT_JUPITER = "org.junit.jupiter:junit-jupiter:5.8.1"
