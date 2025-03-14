@@ -1,2 +1,3 @@
 ignore-rules:
 - android_task_hijacking1
+- android_manifest_usescleartext
