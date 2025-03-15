@@ -1,9 +1,7 @@
 package com.critt.data
 
 import android.annotation.SuppressLint
-import android.media.AudioFormat
 import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.os.Process
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,12 +23,9 @@ import kotlinx.coroutines.withContext
  * @param audioFormat The audio format (default: PCM 16-bit).
  */
 class AudioSource(
-    private val sampleRate: Int = 16000,
-    private val channelConfig: Int = AudioFormat.CHANNEL_IN_MONO,
-    private val audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
+    private val audioRecorder: IAudioRecorder
 ) {
 
-    private var recorder: AudioRecord? = null
     private var recordingJob: Job? = null
 
     /**
@@ -39,38 +34,22 @@ class AudioSource(
      * @param onData Callback function to receive audio data as a ByteArray.
      * @throws IllegalStateException If the audio recording is already started.
      */
-    @SuppressLint("MissingPermission")
     fun startRecording(scope: CoroutineScope, onData: (ByteArray) -> Unit) {
         if (recordingJob?.isActive == true) {
             throw IllegalStateException("Audio recording is already started.")
         }
 
-        val minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-        if (minBufferSize == AudioRecord.ERROR_BAD_VALUE || minBufferSize == AudioRecord.ERROR) {
-            throw IllegalStateException("Invalid audio parameters.")
-        }
-
-        val bufferSize = minBufferSize.coerceAtLeast(2048) // Ensure a minimum buffer size
-
-        recorder = AudioRecord(
-            /* audioSource = */ MediaRecorder.AudioSource.MIC,
-            /* sampleRateInHz = */ sampleRate,
-            /* channelConfig = */ channelConfig,
-            /* audioFormat = */ audioFormat,
-            /* bufferSizeInBytes = */ bufferSize
-        ).apply {
-            if (state != AudioRecord.STATE_INITIALIZED) {
-                throw IllegalStateException("AudioRecord initialization failed.")
-            }
+        if (audioRecorder.state != AudioRecord.STATE_INITIALIZED) {
+            throw IllegalStateException("AudioRecord initialization failed.")
         }
 
         recordingJob = scope.launch(Dispatchers.IO) {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
-            recorder?.startRecording()
+            audioRecorder.startRecording()
 
-            val buffer = ByteArray(bufferSize)
+            val buffer = ByteArray(audioRecorder.bufferSize)
             while (isActive) {
-                val bytesRead = recorder?.read(buffer, 0, buffer.size) ?: -1
+                val bytesRead = audioRecorder.read(buffer, 0, buffer.size) ?: -1
                 when {
                     bytesRead > 0 -> {
                         val data = buffer.copyOf(bytesRead)
@@ -103,7 +82,7 @@ class AudioSource(
     private suspend fun stopRecordingInternal() {
         withContext(NonCancellable) {
             var exception: Throwable? = null
-            recorder?.apply {
+            audioRecorder.apply {
                 if (recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                     runCatching { stop() }
                         .exceptionOrNull()
@@ -119,8 +98,8 @@ class AudioSource(
                         println("Error releasing AudioRecord: ${it.message}")
                     }
             }
-            recorder = null
             exception?.let { throw it }
         }
     }
 }
+

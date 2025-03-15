@@ -1,8 +1,11 @@
 package com.critt.interp.ui
 
+import android.annotation.SuppressLint
+import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.critt.data.ApiResult
+import com.critt.data.AudioRecorderFactory
 import com.critt.data.AudioSource
 import com.critt.data.LanguageRepository
 import com.critt.domain.LanguageData
@@ -23,10 +26,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val audioSource: AudioSource,
+    private val audioRecorderFactory: AudioRecorderFactory,
     private val translationSource: TranslationSource,
     private val languageRepo: LanguageRepository
 ) : ViewModel() {
+    // AudioSource
+    lateinit var audioSource: AudioSource
+
     // Supported languages state
     private val _supportedLanguages =
         MutableStateFlow<ApiResult<List<LanguageData>>>(ApiResult.Loading)
@@ -95,6 +101,13 @@ class MainViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
+    private fun initAudioSource() {
+        if (!::audioSource.isInitialized) {
+            audioSource = AudioSource(audioRecorderFactory.create())
         }
     }
 
@@ -169,9 +182,14 @@ class MainViewModel @Inject constructor(
      *
      * It starts or stops recording and streaming based on the current state.
      */
+    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     fun toggleStreaming() {
         when (_streamingState.value) {
-            is AudioStreamingState.Idle -> startRecordingAndStreaming()
+            is AudioStreamingState.Idle -> {
+                initAudioSource()
+                startRecordingAndStreaming()
+            }
+
             is AudioStreamingState.Streaming -> {
                 stopRecordingAndStreaming()
                 _streamingState.update { AudioStreamingState.Idle }
@@ -179,6 +197,7 @@ class MainViewModel @Inject constructor(
 
             is AudioStreamingState.Error -> {
                 stopRecordingAndStreaming()
+                initAudioSource()
                 startRecordingAndStreaming()
             }
         }
@@ -262,7 +281,9 @@ class MainViewModel @Inject constructor(
      * or when an error occurs that requires stopping the streaming process.
      */
     private fun stopRecordingAndStreaming() {
-        audioSource.stopRecording()
+        if (::audioSource.isInitialized) {
+            audioSource.stopRecording()
+        }
         translationSource.disconnectAllSockets()
     }
 
