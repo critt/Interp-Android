@@ -44,7 +44,6 @@ class AudioSource(
         }
 
         recordingJob = scope.launch(Dispatchers.IO) {
-            Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
             audioRecorder.startRecording()
 
             val buffer = ByteArray(audioRecorder.bufferSize)
