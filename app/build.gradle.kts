@@ -75,25 +75,16 @@ dependencies {
 
     //compose
     implementation(platform(Dependencies.Compose.BOM))
-    androidTestImplementation(platform(Dependencies.Compose.BOM))
     implementation(Dependencies.Compose.MATERIAL3)
 
     // Android Studio Preview support
     debugImplementation(Dependencies.Compose.UI_TOOLING_PREVIEW)
     debugImplementation(Dependencies.Compose.UI_TOOLING)
-    // UI Tests
-    androidTestImplementation(Dependencies.Compose.UI_TEST_JUNIT4)
-    debugImplementation(Dependencies.Compose.UI_TEST_MANIFEST)
-    // Optional - Integration with LiveData
-    implementation(Dependencies.Compose.LIVEDATA)
-    // Optional - Integration with activities
+    // Integration with activities
     implementation(Dependencies.Compose.ACTIVITY_COMPOSE)
-    // Optional - Integration with ViewModels
+    // Integration with ViewModels
     implementation(Dependencies.Compose.LIFECYCLE_VIEWMODEL_COMPOSE)
 
     //testing
     testImplementation(Dependencies.Testing.JUNIT)
-    testImplementation(Dependencies.Testing.JUNIT_JUPITER)
-    androidTestImplementation(Dependencies.Testing.ANDROIDX_TEST_EXT)
-    androidTestImplementation(Dependencies.Testing.ANDROIDX_TEST_ESPRESSO)
 }

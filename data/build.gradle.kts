@@ -45,6 +45,7 @@ android {
 dependencies {
     implementation(project(":domain"))
     implementation(project(":core"))
+    testImplementation(kotlin("test"))
 
     implementation(Dependencies.SocketIO.SOCKET_IO) {
         exclude(group = "org.json", module = "json")
@@ -66,7 +67,31 @@ dependencies {
     kapt(Dependencies.Hilt.ANDROID_COMPILER)
     implementation(Dependencies.Hilt.ANDROID)
 
-    //testing
-    testImplementation(Dependencies.Testing.JUNIT)
-    testImplementation(Dependencies.Testing.JUNIT_JUPITER)
+    //testing - JUnit
+    //testImplementation(Dependencies.Testing.JUNIT)
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    //testing - Mockito
+    testImplementation(Dependencies.Testing.MOCKITO_CORE)
+    testImplementation(Dependencies.Testing.MOCKITO_INLINE)
+    testImplementation(Dependencies.Testing.MOCKITO_KOTLIN)
+    //testing - Truth
+    testImplementation(Dependencies.Testing.TRUTH)
+    //testing - support
+    testImplementation(Dependencies.Testing.COROUTINES_TEST)
+    testImplementation(Dependencies.Testing.ANDROIDX_TEST_CORE)
+    testImplementation(Dependencies.Testing.ANDROIDX_TEST_RULES)
+    testImplementation(Dependencies.Testing.ANDROIDX_TEST_RUNNER)
+    testImplementation(Dependencies.Testing.ANDROIDX_TEST_EXT_JUNIT)
+    testImplementation(Dependencies.Testing.ANDROIDX_TEST_EXT_JUNIT_KTX)
+}
+
+
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+
+    testLogging {     // This is for logging and can be removed.
+        events("passed", "skipped", "failed")
+    }
 }

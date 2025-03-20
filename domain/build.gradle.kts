@@ -37,5 +37,4 @@ dependencies {
 
     //testing
     testImplementation(Dependencies.Testing.JUNIT)
-    testImplementation(Dependencies.Testing.JUNIT_JUPITER)
 }

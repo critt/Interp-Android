@@ -35,12 +35,8 @@ object Dependencies {
     object Compose {
         const val BOM = "androidx.compose:compose-bom:2024.10.01"
         const val MATERIAL3 = "androidx.compose.material3:material3"
-        const val LIVEDATA = "androidx.compose.runtime:runtime-livedata"
         const val UI_TOOLING_PREVIEW = "androidx.compose.ui:ui-tooling-preview"
         const val UI_TOOLING = "androidx.compose.ui:ui-tooling"
-        const val UI_TEST_JUNIT4 = "androidx.compose.ui:ui-test-junit4"
-        const val UI_TEST_MANIFEST = "androidx.compose.ui:ui-test-manifest"
-
         const val ACTIVITY_COMPOSE = "androidx.activity:activity-compose:1.10.0"
         const val LIFECYCLE_VIEWMODEL_COMPOSE = "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7"
     }
@@ -50,10 +46,34 @@ object Dependencies {
     }
 
     object Testing {
-        const val JUNIT = "junit:junit:4.13.2"
-        const val JUNIT_JUPITER = "org.junit.jupiter:junit-jupiter:5.8.1"
-        const val ANDROIDX_TEST_EXT = "androidx.test.ext:junit:1.2.1"
-        const val ANDROIDX_TEST_ESPRESSO = "androidx.test.espresso:espresso-core:3.6.1"
+        // JUnit
+        private const val JUNIT_VERSION = "4.13.2"
+        const val JUNIT = "junit:junit:${JUNIT_VERSION}"
+
+        // Mockito
+        private const val MOCKITO_VERSION = "5.2.0"
+        private const val MOCKITO_KOTLIN_VERSION = "5.1.0"
+        const val MOCKITO_CORE = "org.mockito:mockito-core:${MOCKITO_VERSION}"
+        const val MOCKITO_INLINE = "org.mockito:mockito-inline:${MOCKITO_VERSION}"
+        const val MOCKITO_KOTLIN = "org.mockito.kotlin:mockito-kotlin:${MOCKITO_KOTLIN_VERSION}"
+
+        // Truth
+        private const val TRUTH_VERSION = "1.1.5"
+        const val TRUTH = "com.google.truth:truth:${TRUTH_VERSION}"
+
+        // Coroutines test support
+        private const val COROUTINES_TEST_VERSION = "1.7.3"
+        const val COROUTINES_TEST = "org.jetbrains.kotlinx:kotlinx-coroutines-test:${COROUTINES_TEST_VERSION}"
+
+        // AndroidX Test library for testing Android components
+        private const val ANDROIDX_TEST_VERSION = "1.5.0"
+        private const val ANDROIDX_TEST_EXT_VERSION = "1.1.5"
+
+        const val ANDROIDX_TEST_CORE = "androidx.test:core:${ANDROIDX_TEST_VERSION}"
+        const val ANDROIDX_TEST_RULES = "androidx.test:rules:${ANDROIDX_TEST_VERSION}"
+        const val ANDROIDX_TEST_EXT_JUNIT = "androidx.test.ext:junit:${ANDROIDX_TEST_EXT_VERSION}"
+        const val ANDROIDX_TEST_EXT_JUNIT_KTX = "androidx.test.ext:junit-ktx:${ANDROIDX_TEST_EXT_VERSION}"
+        const val ANDROIDX_TEST_RUNNER = "androidx.test:runner:${ANDROIDX_TEST_VERSION}"
     }
 
     object Crypto {

@@ -1,6 +1,6 @@
 package com.critt.data.di
 
-import com.critt.data.AudioSource
+import com.critt.data.AudioRecorderFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,6 +12,6 @@ import javax.inject.Singleton
 object AudioModule {
     @Provides
     @Singleton
-    fun provideAudioSource(): AudioSource =
-        AudioSource()
+    fun provideAudioRecorderFactory(): AudioRecorderFactory =
+        AudioRecorderFactory()
 }
